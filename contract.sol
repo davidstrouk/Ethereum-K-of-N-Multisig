@@ -37,12 +37,12 @@ contract KofNMultisig {
 	    challenge = Challenge(false, 0, 0, 0);
 	}
 	
-	function removeFromGroup(uint8 i)
+	function removeFromGroup(uint8 index)
 	public
 	{
-	    require(K>0 && users_in_group[i].in_group == true);
+	    require(K>0 && users_in_group[index].in_group == true);
     
-        users_in_group[i].in_group = false;
+        users_in_group[index].in_group = false;
         K--;
 	}
 	
