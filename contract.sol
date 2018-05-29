@@ -38,7 +38,7 @@ contract KofNMultisig {
 	}
 	
 	function removeFromGroup(uint8 index)
-	public
+	private
 	{
 	    require(K>0 && users_in_group[index].in_group == true);
     
