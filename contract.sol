@@ -18,7 +18,7 @@ contract KofNMultisig {
     
 	uint8 N;
 	uint8 K;
-	User[] usersGroup;
+	User[] users_in_group;
 	Challenge challenge;
 	uint constant fee = 0.1 ether;
 	
@@ -32,7 +32,7 @@ contract KofNMultisig {
 	    K = _N;
 	    for(uint8 i = 0; i < _N; i++) {
 	        User memory user = User(wallets[i], true, false);
-            usersGroup.push(user);
+            users_in_group.push(user);
 	    }
 	    challenge = Challenge(false, 0, 0, 0);
 	}
@@ -40,9 +40,9 @@ contract KofNMultisig {
 	function removeFromGroup(uint8 i)
 	public
 	{
-	    require(K>0 && usersGroup[i].in_group == true);
+	    require(K>0 && users_in_group[i].in_group == true);
     
-        usersGroup[i].in_group = false;
+        users_in_group[i].in_group = false;
         K--;
 	}
 	
@@ -55,7 +55,7 @@ contract KofNMultisig {
 	    
 	    challenge = Challenge(true, msg.sender, _target, block.number);
 	    uint8 indexOfChallengedUser = getUserIndexByAddress(_target);
-	    usersGroup[indexOfChallengedUser].challenged = true;
+	    users_in_group[indexOfChallengedUser].challenged = true;
 	    
 	}
 	
@@ -67,7 +67,7 @@ contract KofNMultisig {
 	    
 	    // should only remove the flags because if timestamp passed - should not enter to this function
         uint8 indexOfChallengedUser = getUserIndexByAddress(challenge.target);
-        usersGroup[indexOfChallengedUser].challenged = false;
+        users_in_group[indexOfChallengedUser].challenged = false;
         challenge.valid = false;
         
         assert(address(this).balance >= fee);
@@ -79,7 +79,7 @@ contract KofNMultisig {
 	constant
 	returns (uint8 _i) {
 	    for(uint8 i = 0; i < N; i++) {
-            if(usersGroup[i].wallet == _address)
+            if(users_in_group[i].wallet == _address)
                 return i;
 	    }
 	    return N;
@@ -106,7 +106,7 @@ contract KofNMultisig {
 	constant
 	returns (address wallet, bool in_group)
 	{
-      return (usersGroup[i].wallet, usersGroup[i].in_group);
+      return (users_in_group[i].wallet, users_in_group[i].in_group);
     }
     
 }
