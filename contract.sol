@@ -1,6 +1,30 @@
 // Version of solidity compiler this program was written for
 pragma solidity ^0.4.24;
 
+
+//-------------------------- MultisigWallet Contract -------------------------- 
+
+contract MultisigWallet {
+    
+    address[] groups;
+    
+    //constructor() 
+    //public
+    //{
+        
+    //}
+    
+    function addGroup(address[] wallets)
+	public
+	{
+	    address newContract = new KofNMultisig(wallets);
+	    groups.push(newContract);
+	    
+	}
+}
+
+
+//-------------------------- KofNMultisig Contract -------------------------- 
 contract KofNMultisig {
     
     // Conatants
