@@ -2,87 +2,125 @@
 pragma solidity ^0.4.24;
 
 contract KofNMultisig {
+    
+    // Conatants
+    uint BLOCKS_TO_RESPOND = 20;
+    uint BLOCKS_TO_BLOCK = 50;
 
     struct Challenge {
-        bool valid;
+        bool isActive;
     	address sender;
     	address target;
-    	uint start_block;
+    	uint startBlock;
     }
-    
+  
+    struct Transaction {
+        uint id;
+        address receiver;	
+        uint amountToTransfer;
+        uint count;
+        bool[] usersApproves;
+
+    }  
     struct User {
     	address wallet;
-    	bool in_group;
+    	bool inGroup;
     	bool challenged;
+    	uint lastChallengeBlock;    // the last time this user published a challenge
     }
     
-	uint8 N;
-	uint8 K;
-	User[] users_in_group;
+	uint K;
+	mapping (address => User) usersInGroup;
 	Challenge challenge;
-	uint constant fee = 0.1 ether;
+	mapping (uint => Transaction) ledger;
+	address penaltyWallet;
 	
-//	bytes32 constant message = "You got a challenge";
+	uint constant penalty = 0.1 ether;  // should be total amount/K
 	
 	// Initiliaze KofNMultisig contract
-    constructor(uint8 _N, address[] wallets)
+    constructor(address[] wallets)
     public
     {
-	    N = _N;
-	    K = _N;
-	    for(uint8 i = 0; i < _N; i++) {
-	        User memory user = User(wallets[i], true, false);
-            users_in_group.push(user);
+	    K = wallets.length;
+	    for(uint i = 0; i <wallets.length ; i++) {
+	        User memory user = User(wallets[i], true, false, 0);
+            usersInGroup.push(user);
 	    }
 	    challenge = Challenge(false, 0, 0, 0);
 	}
 	
-	function removeFromGroup(uint8 index)
-	private
-	{
-	    require(K>0 && users_in_group[index].in_group == true);
-    
-        users_in_group[index].in_group = false;
-        K--;
-	}
-	
-	function sendChallenge(address _target)
+	// Create a new challenge and challenge the user with the address target
+    function sendChallenge(address target)
 	payable
 	public
 	{
-	    require(challenge.valid == false);
+	    require(challenge.isActive == false);
 	    require(msg.value >= fee);
+	    require(usersInGroup[target] != 0);    //same as: require(getUserIndexByAddress(target) != -1)
+	    require(block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK);
 	    
-	    challenge = Challenge(true, msg.sender, _target, block.number);
-	    uint8 indexOfChallengedUser = getUserIndexByAddress(_target);
-	    users_in_group[indexOfChallengedUser].challenged = true;
-	    
+	    challenge = Challenge(true, msg.sender, target, block.number);
+	    usersInGroup[msg.sender].lastChallengeBlock = block.number;
+	    usersInGroup[target].challenged = true;
 	}
 	
+	// Check if the function caller is the challenger’s target, answer the challenge if yes	
+	// and take a fee from the contract wallet
 	function respondToChallenge()
 	public
 	{
 	    require(challenge.valid == true);
 	    require(msg.sender == challenge.target);
-	    
-	    // should only remove the flags because if timestamp passed - should not enter to this function
-        uint8 indexOfChallengedUser = getUserIndexByAddress(challenge.target);
-        users_in_group[indexOfChallengedUser].challenged = false;
-        challenge.valid = false;
+	    require(usersInGroup[msg.sender].inGroup == true);
+	
+        usersInGroup[msg.sender].challenged = false;
+        challenge.isActive = false;
         
-        assert(address(this).balance >= fee);
-        challenge.target.transfer(fee);
+        // Punish the whole group by taking the penalty
+        penaltyWallet.transfer(penalty);
+
 	}
+	
+	// called to trigger the removal of the user from the group in case times up
+	function tryToRemoveChallengedUser()
+	public
+	{
+	    if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
+	        removeFromGroup(challenge.target);
+	    }
+	}
+	
+	function removeFromGroup(address userWallet)
+	private
+	{
+	    require(K > 0);
+	    require(usersInGroup[userWallet].inGroup == true);
+	    
+	    // remove the challenge target from group and remove the sender block
+        usersInGroup[userWallet].inGroup = false;
+        K--;
+        usersInGroup[challenge.sender].lastChallengeBlock = 0;
+        
+        // if there are no more users in the group - transfer the contract balance to penaltyWallet
+        if(K == 0)
+        penaltyWallet.transfer(this.balance);
+	}
+	
+	
+	
+	
+	
+
 	
 	function getUserIndexByAddress(address _address)
 	private
 	constant
 	returns (uint8 _i) {
 	    for(uint8 i = 0; i < N; i++) {
-            if(users_in_group[i].wallet == _address)
+            if(usersInGroup[i].wallet == _address)
                 return i;
 	    }
-	    return N;
+	    return -1;
 	}
 	
 	function getN() 
@@ -106,7 +144,7 @@ contract KofNMultisig {
 	constant
 	returns (address wallet, bool in_group)
 	{
-      return (users_in_group[i].wallet, users_in_group[i].in_group);
+      return (usersInGroup[i].wallet, users_in_group[i].in_group);
     }
     
 }
