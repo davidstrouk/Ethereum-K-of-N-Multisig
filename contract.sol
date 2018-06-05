@@ -19,7 +19,8 @@ contract KofNMultisig {
         address receiver;	
         uint amountToTransfer;
         uint count;
-        bool[] usersApproves;
+        //bool[] usersApproves;
+        mapping (address => bool) usersApproves;
 
     }  
     struct User {
@@ -34,6 +35,7 @@ contract KofNMultisig {
 	Challenge challenge;
 	mapping (uint => Transaction) ledger;
 	address penaltyWallet;
+	uint numberOfTransactions;
 	
 	uint constant penalty = 0.1 ether;  // should be total amount/K
 	
@@ -42,11 +44,12 @@ contract KofNMultisig {
     public
     {
 	    K = wallets.length;
-	    for(uint i = 0; i <wallets.length ; i++) {
-	        User memory user = User(wallets[i], true, false, 0);
-            usersInGroup.push(user);
+	    for(uint i = 0; i < wallets.length ; i++) {
+            usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
 	    }
 	    challenge = Challenge(false, 0, 0, 0);
+	    penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
+	    numberOfTransactions = 0;
 	}
 	
 	// Create a new challenge and challenge the user with the address target
@@ -55,8 +58,8 @@ contract KofNMultisig {
 	public
 	{
 	    require(challenge.isActive == false);
-	    require(msg.value >= fee);
-	    require(usersInGroup[target] != 0);    //same as: require(getUserIndexByAddress(target) != -1)
+	    require(msg.value >= penalty);
+	    require(usersInGroup[target].wallet != 0);    //same as: require(getUserIndexByAddress(target) != -1)
 	    require(block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK);
 	    
 	    challenge = Challenge(true, msg.sender, target, block.number);
@@ -69,7 +72,7 @@ contract KofNMultisig {
 	function respondToChallenge()
 	public
 	{
-	    require(challenge.valid == true);
+	    require(challenge.isActive == true);
 	    require(msg.sender == challenge.target);
 	    require(usersInGroup[msg.sender].inGroup == true);
 	
@@ -81,7 +84,7 @@ contract KofNMultisig {
 
 	}
 	
-	// called to trigger the removal of the user from the group in case times up
+	// Called to trigger the removal of the user from the group in case times up
 	function tryToRemoveChallengedUser()
 	public
 	{
@@ -90,6 +93,7 @@ contract KofNMultisig {
 	    }
 	}
 	
+	// Removes the user from group, called only when challenge’s times up
 	function removeFromGroup(address userWallet)
 	private
 	{
@@ -103,48 +107,49 @@ contract KofNMultisig {
         
         // if there are no more users in the group - transfer the contract balance to penaltyWallet
         if(K == 0)
-        penaltyWallet.transfer(this.balance);
+        penaltyWallet.transfer(address(this).balance);
 	}
 	
 	
-	
-	
-	
-
-	
-	function getUserIndexByAddress(address _address)
-	private
-	constant
-	returns (uint8 _i) {
-	    for(uint8 i = 0; i < N; i++) {
-            if(usersInGroup[i].wallet == _address)
-                return i;
-	    }
-	    return -1;
-	}
-	
-	function getN() 
-	public 
-	constant 
-	returns (uint8 _N) 
-	{
-	    return N;
-	}
-	
-	function getK()
-	public 
-	constant 
-	returns (uint8 _K)
-	{
-	    return K;
-	}
-	
-	function getUser(uint8 i)
+	// indicates the consent of msg.sender to transfer “amount” to address “to”
+	function requestPayment (uint amount, address to)
 	public
-	constant
-	returns (address wallet, bool in_group)
 	{
-      return (usersInGroup[i].wallet, users_in_group[i].in_group);
+	    require(usersInGroup[msg.sender].inGroup == true);
+	    require(amount > 0);
+	  
+        //mapping (address => bool) map;
+        Transaction storage transaction = Transaction(numberOfTransactions, to, amount, 1);
+        transaction.usersApproves[to] = true;
+        //transaction.usersApproves = usersMap;
+        //ledger[numberOfTransactions] = transaction;
+        //numberOfTransactions++;
+	    
+	}
+
+    // indicates the msg.sender approve for transaction with the id txid
+    function approvePayment (uint txId)
+    public
+    {
+        require(usersInGroup[msg.sender].inGroup == true);
+        
+        Transaction transaction = ledger[txId];
+        if(transaction.usersApproves[msg.sender] == address(0) || transaction.usersApproves[msg.sender] != false)  // not initiallize
+        {
+            transaction.usersApproves[msg.sender] = true;
+            transaction.count++;
+        }
+
+        if(transaction.count == K) {
+            makePayment(transaction.amount, transaction.receiver);
+        }
+    }
+
+    // Initiates the transfer, called only when all K users gave their “permission”
+    function makePayment (uint amount, address to)
+    public
+    {
+        to.transfer(amount);
     }
     
 }
