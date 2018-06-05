@@ -89,12 +89,12 @@ contract KofNMultisig {
 	public
 	{
 	    if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
-	        removeFromGroup(challenge.target);
+	        _removeFromGroup(challenge.target);
 	    }
 	}
 	
 	// Removes the user from group, called only when challenge’s times up
-	function removeFromGroup(address userWallet)
+	function _removeFromGroup(address userWallet)
 	private
 	{
 	    require(K > 0);
@@ -118,12 +118,9 @@ contract KofNMultisig {
 	    require(usersInGroup[msg.sender].inGroup == true);
 	    require(amount > 0);
 	  
-        //mapping (address => bool) map;
-        Transaction storage transaction = Transaction(numberOfTransactions, to, amount, 1);
-        transaction.usersApproves[to] = true;
-        //transaction.usersApproves = usersMap;
-        //ledger[numberOfTransactions] = transaction;
-        //numberOfTransactions++;
+        ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
+        ledger[numberOfTransactions].usersApproves[msg.sender] = true;
+        numberOfTransactions++;
 	    
 	}
 
@@ -133,15 +130,16 @@ contract KofNMultisig {
     {
         require(usersInGroup[msg.sender].inGroup == true);
         
-        Transaction transaction = ledger[txId];
-        if(transaction.usersApproves[msg.sender] == address(0) || transaction.usersApproves[msg.sender] != false)  // not initiallize
+        Transaction storage transaction = ledger[txId];
+        if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
         {
             transaction.usersApproves[msg.sender] = true;
             transaction.count++;
-        }
-
-        if(transaction.count == K) {
-            makePayment(transaction.amount, transaction.receiver);
+            if(transaction.count == K)
+            {
+                //ledger[txId] = Transaction(0, 0, 0, 0);
+                makePayment(transaction.amountToTransfer, transaction.receiver);
+            }
         }
     }
 
