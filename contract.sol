@@ -112,6 +112,7 @@ contract KofNMultisig {
 	function tryToRemoveChallengedUser()
 	public
 	{
+	    require(challenge.isActive == true);
 	    if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
 	        _removeFromGroup(challenge.target);
 	    }
