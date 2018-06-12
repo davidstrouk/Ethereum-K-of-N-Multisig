@@ -1,12 +1,12 @@
 // Version of solidity compiler this program was written for
 pragma solidity ^0.4.24;
-
-
 //-------------------------- MultisigWallet Contract -------------------------- 
 
 contract MultisigWallet {
     
-    address[] groups;
+    event ContractCreated(address newAddress);
+
+    mapping(address => address) public groups;
     
     //constructor() 
     //public
@@ -16,11 +16,13 @@ contract MultisigWallet {
     
     function addGroup(address[] wallets)
 	public
+	returns (address)
 	{
-	    address newContract = new KofNMultisig(wallets);
-	    groups.push(newContract);
-	    
+	    KofNMultisig newContract = new KofNMultisig(wallets);
+	    groups[msg.sender] = newContract;
+	    return newContract;
 	}
+
 }
 
 
@@ -84,7 +86,8 @@ contract KofNMultisig {
 	{
 	    require(challenge.isActive == false, "There is already a published challenge");
 	    require(msg.value >= penalty, "You don't have enough money to pay the penalty");
-	    require(usersInGroup[target].wallet != 0, "You don't belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
+	    require(usersInGroup[msg.sender].wallet != 0, "You don't belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
+	    require(usersInGroup[target].wallet != 0, "Your target doesn't belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
 	    require(block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK, "You are blocked from sending a challenge. please wait");
 	    
 	    challenge = Challenge(true, msg.sender, target, block.number);
@@ -176,4 +179,138 @@ contract KofNMultisig {
         to.transfer(amount);
     }
     
+    function()
+    public
+    payable
+    {}
+    
+    //-------------------------- KofNMultisig TEST FUNCTIONS ------------------- 
+
+    function getK()
+    public
+    view
+    returns (uint)
+    {
+    	return K;
+    }
+
+    function getUserWallet(address userAddress)
+    public
+    view
+    returns (address)
+    {
+    	return usersInGroup[userAddress].wallet;
+    }
+    
+    function getUserInGroup(address userAddress)
+    public
+    view
+    returns (bool)
+    {
+    	return usersInGroup[userAddress].inGroup;
+    }
+
+    function getUserChallenged(address userAddress)
+    public
+    view
+    returns (bool)
+    {
+    	return usersInGroup[userAddress].challenged;
+    }
+    
+    function getUserLastChallengeBlock(address userAddress)
+    public
+    view
+    returns (uint)
+    {
+    	return usersInGroup[userAddress].lastChallengeBlock;
+    }
+    
+    function getChallengeIsActive()
+    public
+    view
+    returns (bool)
+    {
+    	return challenge.isActive;
+    }
+    
+    function getChallengeSender()
+    public
+    view
+    returns (address)
+    {
+    	return challenge.sender;
+    }
+    
+    function getChallengeTarget()
+    public
+    view
+    returns (address)
+    {
+    	return challenge.target;
+    }
+    
+    function getChallengeStartBlock()
+    public
+    view
+    returns (uint)
+    {
+    	return challenge.startBlock;
+    }
+    
+    function getTransactionId(uint txId)
+    public
+    view
+    returns (uint)
+    {
+    	return ledger[txId].id;
+    }
+    
+    function getTransactionReceiver(uint txId)
+    public
+    view
+    returns (address)
+    {
+    	return ledger[txId].receiver;
+    }
+    
+    function getTransactionAmountToTransfer(uint txId)
+    public
+    view
+    returns (uint)
+    {
+    	return ledger[txId].amountToTransfer;
+    }
+    
+    function getTransactionCount(uint txId)
+    public
+    view
+    returns (uint)
+    {
+    	return ledger[txId].count;
+    }
+    
+    function getTransactionUsersApprove(uint txId, address userAddress)
+    public
+    view
+    returns (bool)
+    {
+    	return ledger[txId].usersApproves[userAddress];
+    }
+    
+    function getPenaltyWallet()
+    public
+    view
+    returns (address)
+    {
+    	return penaltyWallet;
+    }
+    
+    function getNumberOfTransactions()
+    public
+    view
+    returns (uint)
+    {
+    	return numberOfTransactions;
+    }
 }
