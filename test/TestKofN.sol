@@ -11,7 +11,7 @@ contract TestKofN {
 	// 	// Assert.equal(uint(2), uint(1), "wrong");
 	// }
 
-	// function testAddGroup() public {
+	// function testAddGroup() public {a
 	// 	MultisigWallet ms = new MultisigWallet();
 	// 	address[] storage wallets;
 	// 	wallets.push(0x56C509F889a8B6950a77d0E4D8a252D2a805A74d);
@@ -26,19 +26,19 @@ contract TestKofN {
 
 	address user1 = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;
 	address user2 = 0xdE9d4F3c10a5242EB8885502a609dfCa33ce5fdF;
+	uint constant SIZE = 2;
 
 	function testConstructor() public {
 
 		KofNMultisig newContract = KofNMultisig(DeployedAddresses.KofNMultisig());
 
-		address[] wallets;
-		wallets.push(user1);
-		wallets.push(user2);
+		address[SIZE] memory wallets;
+		wallets[0] = user1;
+		wallets[1] = user2;
 
 		// TESTS
 		Assert.equal(newContract.getK(), wallets.length, "Wrong K");
 		for(uint i = 0; i < wallets.length; i++) {
-			// print(wallets[1]);
 			Assert.equal(newContract.getUserWallet(wallets[i]), wallets[i], "Wrong userWallet");
 			Assert.equal(newContract.getUserInGroup(wallets[i]), true, "Wrong userInGroup");
 			Assert.equal(newContract.getUserChallenged(wallets[i]), false, "Wrong userChallenged");
