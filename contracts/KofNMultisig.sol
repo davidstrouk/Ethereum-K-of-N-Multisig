@@ -142,14 +142,14 @@ contract KofNMultisig {
             if(transaction.count == K)
             {
                 //ledger[txId] = Transaction(0, 0, 0, 0);
-                makePayment(transaction.amountToTransfer, transaction.receiver);
+                _makePayment(transaction.amountToTransfer, transaction.receiver);
             }
         }
     }
 
     // Initiates the transfer, called only when all K users gave their “permission”
-    function makePayment (uint amount, address to)
-    public
+    function _makePayment (uint amount, address to)
+    private
     {
         to.transfer(amount);
     }
