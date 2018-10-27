@@ -24,8 +24,8 @@ contract TestKofN {
 
 	// }
 
-	address user1 = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;
-	address user2 = 0xdE9d4F3c10a5242EB8885502a609dfCa33ce5fdF;
+	address user1 = 0x655d70f5A540356453307f7e55584cDb6117aCe7;
+	address user2 = 0xe7326e1743C530cBB3FA7EFa27F6345C5Baf1582;
 	uint constant SIZE = 2;
 
 	function testConstructor() public {
@@ -57,9 +57,9 @@ contract TestKofN {
 		KofNMultisig newContract = KofNMultisig(DeployedAddresses.KofNMultisig());
 
 		// Test Require #1
-   		ThrowProxy throwproxy = new ThrowProxy(address(newContract)); 
+   		ThrowProxy throwproxy = new ThrowProxy(address(newContract));
    		KofNMultisig(address(throwproxy)).sendChallenge(user1);
-    	bool r = throwproxy.execute.gas(200000)(); 
+    	bool r = throwproxy.execute.gas(200000)();
     	Assert.isFalse(r, "Should be false because is should throw!");
 
 		// Test Require #2
