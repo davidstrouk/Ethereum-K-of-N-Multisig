@@ -82,17 +82,17 @@ contract('TestKofN', async (accounts) => {
 
 
       // ----------------------REQUIRE #5--------------------------
-      let instance5 = await KofNMultisig.new(users_in_group);
-      await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-      await instance5.respondToChallenge({from: users_in_group[1]});
-      waitNBlocks(1);
-      try {
-       await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-      } catch (error) {
-          Error = error;
-      }
-      assert.notEqual(Error, undefined, 'Error must be thrown');
-      assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
+      // let instance5 = await KofNMultisig.new(users_in_group);
+      // await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      // await instance5.respondToChallenge({from: users_in_group[1]});
+      // waitNBlocks(1);
+      // try {
+      //  await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      // } catch (error) {
+      //     Error = error;
+      // }
+      // assert.notEqual(Error, undefined, 'Error must be thrown');
+      // assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
 
 
       // ----------------------FUNCTION TEST--------------------------
@@ -134,5 +134,43 @@ contract('TestKofN', async (accounts) => {
       }
       assert.notEqual(Error, undefined, 'Error must be thrown');
       assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
+    });
+
+    it("tryToRemoveChallengedUser", async () => {
+      var Error;
+      var res;
+
+      // REQUIRE #1
+      let instance1 = await KofNMultisig.new(users_in_group);
+      try {
+       await instance1.tryToRemoveChallengedUser();
+     } catch (error) {
+          Error = error;
+      }
+          assert.notEqual(Error, undefined, 'Error must be thrown');
+          assert.isAbove(Error.message.search("There is no challenge"), -1, "Require #1 Failed");
+
+
+      // // ----------------------REQUIRE #2--------------------------
+      // let instance2 = await KofNMultisig.new(users_in_group);
+      // // Good challenge
+      // await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      //
+      // try {
+      //   await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      // } catch (error) {
+      //     Error = error;
+      // }
+      //     assert.notEqual(Error, undefined, 'Error must be thrown');
+      //     assert.isAbove(Error.message.search("There is already a published challenge"), -1, "Require #2 Failed");
+      //
+      // try {
+      //   await instance2.sendChallenge(users_in_group[0], {value: valid_penalty, from: users_in_group[1]});
+      // } catch (error) {
+      //     Error = error;
+      // }
+      //     assert.notEqual(Error, undefined, 'Error must be thrown');
+      //     assert.isAbove(Error.message.search("There is already a published challenge"), -1, "Require #2 Failed");
+
     });
 });

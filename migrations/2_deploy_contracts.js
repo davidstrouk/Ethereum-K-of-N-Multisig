@@ -7,5 +7,5 @@ module.exports = function(deployer) {
     const accounts = web3.eth.accounts;
     const user = accounts[0];
 
-    deployer.deploy(KofNMultisig, [0x56C509F889a8B6950a77d0E4D8a252D2a805A74d, 0xdE9d4F3c10a5242EB8885502a609dfCa33ce5fdF]);
+    deployer.deploy(KofNMultisig, ["0x043e0af8a0aBe779b18c8E40d301aF590b3ecD90", "0x11D1aC7078b44fFd61693806c7B6f91984e250C0"]);
 };
