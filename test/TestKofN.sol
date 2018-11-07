@@ -24,13 +24,8 @@ contract TestKofN {
 
 	// }
 
-<<<<<<< HEAD
-	address user1 = 0x043e0af8a0aBe779b18c8E40d301aF590b3ecD90;
-	address user2 = 0x11D1aC7078b44fFd61693806c7B6f91984e250C0;
-=======
 	address user1 = 0x655d70f5A540356453307f7e55584cDb6117aCe7;
 	address user2 = 0xe7326e1743C530cBB3FA7EFa27F6345C5Baf1582;
->>>>>>> eafa55ed74beb47aa63ff00c8a59eefc62119f82
 	uint constant SIZE = 2;
 
 	function testConstructor() public {
