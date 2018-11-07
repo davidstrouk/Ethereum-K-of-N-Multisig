@@ -155,11 +155,23 @@ contract('TestKofN', async (accounts) => {
       let instance2 = await KofNMultisig.new(users_in_group);
       // Good challenge
       await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-      waitNBlocks(BLOCKS_TO_RESPOND + 1);
+      waitNBlocks(BLOCKS_TO_RESPOND + 2);
       await instance2.tryToRemoveChallengedUser();
 
       res = await instance2.getUserInGroup(users_in_group[1]);
       assert.equal(res, false, "User has not been removed from group");
 
+      // ----------------------NORMAL BEHAVIOR TEST (WITHOUT REMOVAL)--------------------------
+      let instance3 = await KofNMultisig.new(users_in_group);
+      // Good challenge
+      await instance3.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      res = await instance3.getChallengeStartBlock();
+      await instance3.tryToRemoveChallengedUser();
+
+      res = await instance3.getUserInGroup(users_in_group[1]);
+      assert.equal(res, true, "User has been removed from group");
+
+
     });
+
 });
