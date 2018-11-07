@@ -60,7 +60,6 @@ contract KofNMultisig {
 	payable
 	public
 	{
-<<<<<<< HEAD
 		  require(usersInGroup[msg.sender].wallet != 0,
         "You dont belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
 	    require(challenge.isActive == false,
@@ -72,13 +71,6 @@ contract KofNMultisig {
 	    require(usersInGroup[msg.sender].lastChallengeBlock == 0
         || block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK,
         "You are blocked from sending a challenge. please wait");
-=======
-		require(usersInGroup[msg.sender].wallet != 0, "You dont belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
-	    require(challenge.isActive == false, "There is already a published challenge");
-	    require(msg.value >= penalty, "You dont have enough money to pay the penalty");
-	    require(usersInGroup[target].wallet != 0, "Your target doesnt belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
-	    require(block.number - usersInGroup[msg.sender].lastChallengeBlock > BLOCKS_TO_BLOCK, "You are blocked from sending a challenge. please wait");
->>>>>>> eafa55ed74beb47aa63ff00c8a59eefc62119f82
 
 	    challenge = Challenge(true, msg.sender, target, block.number);
 	    usersInGroup[msg.sender].lastChallengeBlock = block.number;
@@ -90,18 +82,12 @@ contract KofNMultisig {
 	function respondToChallenge()
 	public
 	{
-<<<<<<< HEAD
 	    require(challenge.isActive == true,
         "There is no challenge");
 	    require(msg.sender == challenge.target,
         "You are not the target of the challenge. You cant respond to it");
 	    require(usersInGroup[msg.sender].inGroup == true,
         "You waited too long to respond. Sorry :(");
-=======
-	    require(challenge.isActive == true, "There is no challenge");
-	    require(msg.sender == challenge.target, "You are not the target of the challenge. You cant respond to it");
-	    require(usersInGroup[msg.sender].inGroup == true, "You waited too long to respond. Sorry :(");
->>>>>>> eafa55ed74beb47aa63ff00c8a59eefc62119f82
 
         usersInGroup[msg.sender].challenged = false;
         challenge.isActive = false;
@@ -145,15 +131,10 @@ contract KofNMultisig {
 	function requestPayment(uint amount, address to)
 	public
 	{
-<<<<<<< HEAD
 	    require(usersInGroup[msg.sender].inGroup == true,
         "You dont belong to the group");
 	    require(amount > 0,
         "Please ask for a possitive amount");
-=======
-	    require(usersInGroup[msg.sender].inGroup == true, "You dont belong to the group");
-	    require(amount > 0, "Please ask for a possitive amount");
->>>>>>> eafa55ed74beb47aa63ff00c8a59eefc62119f82
 
         ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
         ledger[numberOfTransactions].usersApproves[msg.sender] = true;
@@ -165,12 +146,8 @@ contract KofNMultisig {
     function approvePayment(uint txId)
     public
     {
-<<<<<<< HEAD
         require(usersInGroup[msg.sender].inGroup == true,
           "You dont belong to the group");
-=======
-        require(usersInGroup[msg.sender].inGroup == true, "You dont belong to the group");
->>>>>>> eafa55ed74beb47aa63ff00c8a59eefc62119f82
 
         Transaction storage transaction = ledger[txId];
         if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
