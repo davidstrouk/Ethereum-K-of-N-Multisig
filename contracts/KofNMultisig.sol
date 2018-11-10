@@ -9,7 +9,7 @@ contract KofNMultisig {
     uint BLOCKS_TO_BLOCK = 50;
 
     struct Challenge {
-        bool isActive;
+      bool isActive;
     	address sender;
     	address target;
     	uint startBlock;
@@ -82,12 +82,16 @@ contract KofNMultisig {
 	function respondToChallenge()
 	public
 	{
+      require(usersInGroup[msg.sender].wallet != 0,
+        "You are not a part of the group");
+      require(usersInGroup[msg.sender].inGroup == true,
+        "You dont belong to the group anymore");
 	    require(challenge.isActive == true,
         "There is no challenge");
 	    require(msg.sender == challenge.target,
         "You are not the target of the challenge. You cant respond to it");
-	    require(usersInGroup[msg.sender].inGroup == true,
-        "You waited too long to respond. Sorry :(");
+	    /* require(usersInGroup[msg.sender].inGroup == true,
+        "You waited too long to respond. Sorry"); */
 
         usersInGroup[msg.sender].challenged = false;
         challenge.isActive = false;
@@ -135,6 +139,8 @@ contract KofNMultisig {
         "You dont belong to the group");
 	    require(amount > 0,
         "Please ask for a possitive amount");
+      require(challenge.isActive == false,
+        "There is an active challenge. Please wait until challenge is done");
 
         ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
         ledger[numberOfTransactions].usersApproves[msg.sender] = true;
@@ -148,7 +154,9 @@ contract KofNMultisig {
     {
         require(usersInGroup[msg.sender].inGroup == true,
           "You dont belong to the group");
-
+        require(challenge.isActive == false,
+          "There is an active challenge. Please wait until challenge is done");
+          
         Transaction storage transaction = ledger[txId];
         if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
         {
@@ -302,5 +310,13 @@ contract KofNMultisig {
     returns (uint)
     {
     	return numberOfTransactions;
+    }
+
+    function getBalance()
+    public
+    view
+    returns (uint)
+    {
+      return address(this).balance;
     }
 }

@@ -16,8 +16,8 @@ const waitNBlocks = async n => {
 
 contract('TestKofN', async (accounts) => {
 
-  const users_in_group = [accounts[0], accounts[1]];
-  const user_out_of_group = "0x9cEECBB913801F15C845C97454d9C92b4033160C";
+  const users_in_group = [accounts[0], accounts[1], accounts[2]];
+  const user_out_of_group = "0x09b537A522072DFc8B56626428dF82263F6bd21e";
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const BLOCKS_TO_RESPOND = 20;
@@ -27,7 +27,7 @@ contract('TestKofN', async (accounts) => {
     var Error;
     var res;
 
-    // REQUIRE #1
+    // ----------------------REQUIRE #1--------------------------
     let instance1 = await KofNMultisig.new(users_in_group);
     try {
      await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
@@ -140,7 +140,7 @@ contract('TestKofN', async (accounts) => {
       var Error;
       var res;
 
-      // REQUIRE #1
+      // ----------------------REQUIRE #1--------------------------
       let instance1 = await KofNMultisig.new(users_in_group);
       try {
        await instance1.tryToRemoveChallengedUser();
@@ -173,5 +173,96 @@ contract('TestKofN', async (accounts) => {
 
 
     });
+
+    it("testRespondToChallenge", async () => {
+
+      var Error;
+      var res;
+
+      // ----------------------REQUIRE #1--------------------------
+      let instance1 = await KofNMultisig.new(users_in_group);
+      try {
+       await instance1.respondToChallenge({from: user_out_of_group});
+      } catch (error) {
+          Error = error;
+      }
+      assert.notEqual(Error, undefined, 'Error must be thrown');
+      assert.isAbove(Error.message.search("You are not a part of the group"), -1, "Require #1 Failed");
+
+// TBD: ask david
+      // // ----------------------REQUIRE #2--------------------------
+      // let instance2 = await KofNMultisig.new(users_in_group);
+      // await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      // waitNBlocks(BLOCKS_TO_RESPOND+1);
+      // try {
+      //   await instance2.respondToChallenge({from: users_in_group[1]});
+      // } catch (error) {
+      //     Error = error;
+      // }
+      // assert.notEqual(Error, undefined, 'Error must be thrown');
+      // assert.isAbove(Error.message.search("You dont belong to the group anymore"), -1, "Require #2 Failed");
+
+      // ----------------------REQUIRE #3--------------------------
+      let instance3 = await KofNMultisig.new(users_in_group);
+      try {
+        await instance3.respondToChallenge({from: users_in_group[0]});
+      } catch (error) {
+          Error = error;
+      }
+      assert.notEqual(Error, undefined, 'Error must be thrown');
+      assert.isAbove(Error.message.search("There is no challenge"), -1, "Require #3 Failed");
+
+      // ----------------------REQUIRE #4--------------------------
+      let instance4 = await KofNMultisig.new(users_in_group);
+      // Good challenge
+      await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+
+      try {
+        await instance4.respondToChallenge({from: users_in_group[2]});
+      } catch (error) {
+          Error = error;
+      }
+      assert.notEqual(Error, undefined, 'Error must be thrown');
+      assert.isAbove(Error.message.search("You are not the target of the challenge. You cant respond to it"), -1, "Require #4 Failed");
+
+
+        // ----------------------FUNCTION TEST--------------------------
+        let instance5 = await KofNMultisig.new(users_in_group);
+
+        // transfer ether to the contract
+        web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance5.address, value: web3.toWei(1, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+
+        var init_K = await instance5.getK();
+        //transfer ether
+        var init_balance = await instance5.getBalance();
+        // console.log('init balance: %d',init_balance);
+        await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+        res = await instance5.getBalance();
+        // assert.equal(res, init_balance+valid_penalty, "invalid penalty transfer in SendChallenge");
+
+        res = await instance5.getChallengeTarget();
+        assert.equal(res, users_in_group[1], "challenge.target is invalid");
+
+        res = await instance5.getChallengeIsActive();
+        assert.equal(res, true, "challenge.isActive is invalid");
+
+        waitNBlocks(5);
+        await instance5.respondToChallenge({from: users_in_group[1]});
+
+        res = await instance5.getUserChallenged(users_in_group[1]);
+        assert.equal(res, false, "user.challenged is invalid");
+
+        res = await instance5.getChallengeIsActive();
+        assert.equal(res, false, "challenge.isActive is invalid");
+
+        res = await instance5.getK();
+        assert.equal(res.toString(), init_K.toString(), "wrong value of K");
+
+        res = await instance5.getBalance();
+        // assert.equal(res, init_balance, "invalid penalty transfer");
+
+      });
+
+
 
 });

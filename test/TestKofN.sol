@@ -26,7 +26,8 @@ contract TestKofN {
 
 	address user1 = 0x655d70f5A540356453307f7e55584cDb6117aCe7;
 	address user2 = 0xe7326e1743C530cBB3FA7EFa27F6345C5Baf1582;
-	uint constant SIZE = 2;
+	address user3 = 0x81BE0A9D2C6F7880643477207875b30dD2C514d4;
+	uint constant SIZE = 3;
 
 	function testConstructor() public {
 
@@ -35,7 +36,7 @@ contract TestKofN {
 		address[SIZE] memory wallets;
 		wallets[0] = user1;
 		wallets[1] = user2;
-
+		wallets[2] = user3;
 		// TESTS
 		Assert.equal(newContract.getK(), wallets.length, "Wrong K");
 		for(uint i = 0; i < wallets.length; i++) {
