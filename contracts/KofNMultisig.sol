@@ -31,6 +31,7 @@ contract KofNMultisig {
     	uint lastChallengeBlock;    // the last time this user published a challenge
     }
 
+  uint N;
 	uint K;
 	mapping (address => User) usersInGroup;
 	Challenge challenge;
@@ -41,12 +42,13 @@ contract KofNMultisig {
 	uint constant penalty = 0.1 ether;  // should be total amount/K
 
 	// Initiliaze KofNMultisig contract
-    constructor(address[] wallets)
+    constructor(address[] wallets, uint k)
     public
     {
         require(wallets.length > 0,
           "There are no members in the group");
-	    K = wallets.length;
+	    N = wallets.length;
+      K = k;
 	    for(uint i = 0; i < wallets.length ; i++) {
             usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
 	    }
@@ -83,7 +85,7 @@ contract KofNMultisig {
 	public
 	{
       require(usersInGroup[msg.sender].wallet != 0,
-        "You are not a part of the group");
+        "You dont belong to the group");
       require(usersInGroup[msg.sender].inGroup == true,
         "You dont belong to the group anymore");
 	    require(challenge.isActive == true,
@@ -105,6 +107,8 @@ contract KofNMultisig {
 	function tryToRemoveChallengedUser()
 	public
 	{
+    require(usersInGroup[msg.sender].inGroup == true,
+      "You dont belong to the group");
 	    require(challenge.isActive == true,
         "There is no challenge");
 	    require(usersInGroup[challenge.target].inGroup == true,
@@ -122,11 +126,14 @@ contract KofNMultisig {
 
 	    // remove the challenge target from group and remove the sender block
         usersInGroup[userWallet].inGroup = false;
-        K--;
+        N--;
+        if(K > N) {
+          K--;
+        }
         usersInGroup[challenge.sender].lastChallengeBlock = 0;
 
         // if there are no more users in the group - transfer the contract balance to penaltyWallet
-        if(K == 0)
+        if(N == 0)
         penaltyWallet.transfer(address(this).balance);
 	}
 
@@ -139,8 +146,6 @@ contract KofNMultisig {
         "You dont belong to the group");
 	    require(amount > 0,
         "Please ask for a possitive amount");
-      require(challenge.isActive == false,
-        "There is an active challenge. Please wait until challenge is done");
 
         ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
         ledger[numberOfTransactions].usersApproves[msg.sender] = true;
@@ -154,9 +159,9 @@ contract KofNMultisig {
     {
         require(usersInGroup[msg.sender].inGroup == true,
           "You dont belong to the group");
-        require(challenge.isActive == false,
-          "There is an active challenge. Please wait until challenge is done");
-          
+        require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
+            "There is not enough money to make the transfer");
+
         Transaction storage transaction = ledger[txId];
         if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
         {
@@ -183,6 +188,14 @@ contract KofNMultisig {
     {}
 
     //-------------------------- KofNMultisig TEST FUNCTIONS -------------------
+
+    function getN()
+    public
+    view
+    returns (uint)
+    {
+    	return N;
+    }
 
     function getK()
     public
