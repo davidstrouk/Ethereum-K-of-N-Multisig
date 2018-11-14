@@ -3,24 +3,24 @@ pragma solidity ^0.4.24;
 
 import "./KofNMultisig.sol";
 
-//-------------------------- MultisigWallet Contract -------------------------- 
+//-------------------------- MultisigWallet Contract --------------------------
 contract MultisigWallet {
-    
+
     event ContractCreated(address newAddress);
 
     mapping(address => address) public groups;
-    
-    //constructor() 
+
+    //constructor()
     //public
     //{
-        
+
     //}
-    
-    function addGroup(address[] wallets)
+
+    function addGroup(address[] wallets, uint k)
 	public
 	returns (address)
 	{
-	    KofNMultisig newContract = new KofNMultisig(wallets);
+	    KofNMultisig newContract = new KofNMultisig(wallets, k);
 	    groups[msg.sender] = newContract;
 	    return newContract;
 	}

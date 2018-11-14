@@ -17,6 +17,7 @@ const waitNBlocks = async n => {
 contract('TestKofN', async (accounts) => {
 
   const users_in_group = [accounts[0], accounts[1], accounts[2]];
+  const _k = 2;
   const user_out_of_group = "0x09b537A522072DFc8B56626428dF82263F6bd21e";
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
@@ -28,7 +29,7 @@ contract('TestKofN', async (accounts) => {
     var res;
 
     // ----------------------REQUIRE #1--------------------------
-    let instance1 = await KofNMultisig.new(users_in_group);
+    let instance1 = await KofNMultisig.new(users_in_group, _k);
     try {
      await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
    } catch (error) {
@@ -39,7 +40,7 @@ contract('TestKofN', async (accounts) => {
 
 
     // ----------------------REQUIRE #2--------------------------
-    let instance2 = await KofNMultisig.new(users_in_group);
+    let instance2 = await KofNMultisig.new(users_in_group, _k);
     // Good challenge
     await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
 
@@ -61,7 +62,7 @@ contract('TestKofN', async (accounts) => {
 
 
       // ----------------------REQUIRE #3--------------------------
-      let instance3 = await KofNMultisig.new(users_in_group);
+      let instance3 = await KofNMultisig.new(users_in_group, _k);
       try {
        await instance3.sendChallenge(users_in_group[1], {value: invalid_penalty, from: users_in_group[0]});
       } catch (error) {
@@ -71,7 +72,7 @@ contract('TestKofN', async (accounts) => {
           assert.isAbove(Error.message.search("You dont have enough money to pay the penalty"), -1, "Require #3 Failed");
 
       // ----------------------REQUIRE #4--------------------------
-      let instance4 = await KofNMultisig.new(users_in_group);
+      let instance4 = await KofNMultisig.new(users_in_group, _k);
       try {
        await instance4.sendChallenge(user_out_of_group, {value: valid_penalty, from: users_in_group[0]});
       } catch (error) {
@@ -82,7 +83,7 @@ contract('TestKofN', async (accounts) => {
 
 
       // ----------------------REQUIRE #5--------------------------
-      let instance5 = await KofNMultisig.new(users_in_group);
+      let instance5 = await KofNMultisig.new(users_in_group, _k);
       await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
       await instance5.respondToChallenge({from: users_in_group[1]});
       waitNBlocks(1);
@@ -96,7 +97,7 @@ contract('TestKofN', async (accounts) => {
 
 
       // ----------------------FUNCTION TEST--------------------------
-      let instance6 = await KofNMultisig.new(users_in_group);
+      let instance6 = await KofNMultisig.new(users_in_group, _k);
 
       res = await instance6.getChallengeIsActive();
       assert.equal(res, false, "challenge.isActive is invalid");
@@ -141,7 +142,7 @@ contract('TestKofN', async (accounts) => {
       var res;
 
       // ----------------------REQUIRE #1--------------------------
-      let instance1 = await KofNMultisig.new(users_in_group);
+      let instance1 = await KofNMultisig.new(users_in_group, _k);
       try {
        await instance1.tryToRemoveChallengedUser();
      } catch (error) {
@@ -152,7 +153,7 @@ contract('TestKofN', async (accounts) => {
 
 
       // ----------------------NORMAL BEHAVIOR TEST (WITH REMOVAL)--------------------------
-      let instance2 = await KofNMultisig.new(users_in_group);
+      let instance2 = await KofNMultisig.new(users_in_group, _k);
       // Good challenge
       await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
       waitNBlocks(BLOCKS_TO_RESPOND + 2);
@@ -162,7 +163,7 @@ contract('TestKofN', async (accounts) => {
       assert.equal(res, false, "User has not been removed from group");
 
       // ----------------------NORMAL BEHAVIOR TEST (WITHOUT REMOVAL)--------------------------
-      let instance3 = await KofNMultisig.new(users_in_group);
+      let instance3 = await KofNMultisig.new(users_in_group, _k);
       // Good challenge
       await instance3.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
       res = await instance3.getChallengeStartBlock();
@@ -180,7 +181,7 @@ contract('TestKofN', async (accounts) => {
       var res;
 
       // ----------------------REQUIRE #1--------------------------
-      let instance1 = await KofNMultisig.new(users_in_group);
+      let instance1 = await KofNMultisig.new(users_in_group, _k);
       try {
        await instance1.respondToChallenge({from: user_out_of_group});
       } catch (error) {
@@ -203,7 +204,7 @@ contract('TestKofN', async (accounts) => {
       // assert.isAbove(Error.message.search("You dont belong to the group anymore"), -1, "Require #2 Failed");
 
       // ----------------------REQUIRE #3--------------------------
-      let instance3 = await KofNMultisig.new(users_in_group);
+      let instance3 = await KofNMultisig.new(users_in_group, _k);
       try {
         await instance3.respondToChallenge({from: users_in_group[0]});
       } catch (error) {
@@ -213,7 +214,7 @@ contract('TestKofN', async (accounts) => {
       assert.isAbove(Error.message.search("There is no challenge"), -1, "Require #3 Failed");
 
       // ----------------------REQUIRE #4--------------------------
-      let instance4 = await KofNMultisig.new(users_in_group);
+      let instance4 = await KofNMultisig.new(users_in_group, _k);
       // Good challenge
       await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
 
@@ -227,7 +228,7 @@ contract('TestKofN', async (accounts) => {
 
 
         // ----------------------FUNCTION TEST--------------------------
-        let instance5 = await KofNMultisig.new(users_in_group);
+        let instance5 = await KofNMultisig.new(users_in_group, _k);
 
         // transfer ether to the contract
         web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance5.address, value: web3.toWei(1, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
