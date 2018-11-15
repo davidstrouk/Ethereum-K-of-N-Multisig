@@ -159,8 +159,13 @@ contract KofNMultisig {
   {
     require(usersInGroup[msg.sender].inGroup == true,
       "You dont belong to the group");
-    require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
-      "There is not enough money to make the transfer");
+    require(txId > 0 && ledger[txId].id == txId,
+      "Transaction number is wrong");
+
+    if(challenge.isActive) {
+      require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
+        "There is not enough money to make the transfer");
+    }
 
     Transaction storage transaction = ledger[txId];
     if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
@@ -332,4 +337,13 @@ contract KofNMultisig {
   {
     return address(this).balance;
   }
+
+  function getAddress()
+  public
+  view
+  returns (address)
+  {
+    return address(this);
+  }
+
 }

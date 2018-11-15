@@ -19,6 +19,7 @@ contract('TestKofN', async (accounts) => {
   const users_in_group = [accounts[0], accounts[1], accounts[2]];
   const _k = 2;
   const user_out_of_group = accounts[3];
+  const one_ether = 1000000000000000000; // 1 ether
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const BLOCKS_TO_RESPOND = 20;
@@ -269,16 +270,55 @@ contract('TestKofN', async (accounts) => {
     var Error;
     var res;
 
-    // ----------------------REQUIRE #1--------------------------
+    // ----------------------TEST 1: REQUIRE #1--------------------------
     let instance1 = await KofNMultisig.new(users_in_group, _k);
     try {
-      await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
+      await instance1.approvePayment(0, {from: user_out_of_group});
     } catch (error) {
       Error = error;
-      console.log(error);
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
+
+    // ----------------------TEST 2: REQUIRE #2.1--------------------------
+    let instance2 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance2.approvePayment(0, {from: accounts[0]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("Transaction number is wrong"), -1, "Require #2.1 Failed");
+
+    // ----------------------TEST 3: REQUIRE #2.2--------------------------
+    let instance3 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance3.approvePayment(1, {from: accounts[0]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("Transaction number is wrong"), -1, "Require #2.2 Failed");
+
+    // ----------------------TEST 4: REQUIRE #3--------------------------
+    let amount = one_ether + valid_penalty;
+    let instance4 = await KofNMultisig.new(users_in_group, _k);
+
+    var init_balance = await instance4.getBalance();
+    assert.equal(init_balance, 0, "Initial balance is wrong");
+
+    let instance4_address = await instance4.getAddress();
+    await web3.eth.sendTransaction({from: accounts[0], to: instance4_address, value: one_ether})
+    // assert.Equal()
+    await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]})
+    await instance4.requestPayment(amount, user_out_of_group, {from: users_in_group[0]})
+    try {
+      await instance4.approvePayment(1, {from: users_in_group[1]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("Transaction number is wrong"), -1, "Require #2.2 Failed");
 
   });
 
