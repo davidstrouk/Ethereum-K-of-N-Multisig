@@ -28,6 +28,7 @@ contract TestKofN {
 	address user2 = 0xe7326e1743C530cBB3FA7EFa27F6345C5Baf1582;
 	address user3 = 0x81BE0A9D2C6F7880643477207875b30dD2C514d4;
 	uint constant SIZE = 3;
+	uint constant K = 2;
 
 	function testConstructor() public {
 
@@ -38,7 +39,7 @@ contract TestKofN {
 		wallets[1] = user2;
 		wallets[2] = user3;
 		// TESTS
-		Assert.equal(newContract.getK(), wallets.length, "Wrong K");
+		Assert.equal(newContract.getK(), K, "Wrong K");
 		for(uint i = 0; i < wallets.length; i++) {
 			Assert.equal(newContract.getUserWallet(wallets[i]), wallets[i], "Wrong userWallet");
 			Assert.equal(newContract.getUserInGroup(wallets[i]), true, "Wrong userInGroup");

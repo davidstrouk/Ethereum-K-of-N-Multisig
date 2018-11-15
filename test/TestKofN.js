@@ -18,7 +18,7 @@ contract('TestKofN', async (accounts) => {
 
   const users_in_group = [accounts[0], accounts[1], accounts[2]];
   const _k = 2;
-  const user_out_of_group = "0x09b537A522072DFc8B56626428dF82263F6bd21e";
+  const user_out_of_group = accounts[3];
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const BLOCKS_TO_RESPOND = 20;
@@ -31,12 +31,12 @@ contract('TestKofN', async (accounts) => {
     // ----------------------REQUIRE #1--------------------------
     let instance1 = await KofNMultisig.new(users_in_group, _k);
     try {
-     await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
-   } catch (error) {
-        Error = error;
+      await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
+    } catch (error) {
+      Error = error;
     }
-        assert.notEqual(Error, undefined, 'Error must be thrown');
-        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
 
 
     // ----------------------REQUIRE #2--------------------------
@@ -137,7 +137,7 @@ contract('TestKofN', async (accounts) => {
       assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
     });
 
-    it("tryToRemoveChallengedUser", async () => {
+  it("testTryToRemoveChallengedUser", async () => {
       var Error;
       var res;
 
@@ -175,7 +175,7 @@ contract('TestKofN', async (accounts) => {
 
     });
 
-    it("testRespondToChallenge", async () => {
+  it("testRespondToChallenge", async () => {
 
       var Error;
       var res;
@@ -188,7 +188,7 @@ contract('TestKofN', async (accounts) => {
           Error = error;
       }
       assert.notEqual(Error, undefined, 'Error must be thrown');
-      assert.isAbove(Error.message.search("You are not a part of the group"), -1, "Require #1 Failed");
+      assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
 
 // TBD: ask david
       // // ----------------------REQUIRE #2--------------------------
@@ -264,6 +264,22 @@ contract('TestKofN', async (accounts) => {
 
       });
 
+  it("testApprovePayment", async () => {
 
+    var Error;
+    var res;
+
+    // ----------------------REQUIRE #1--------------------------
+    let instance1 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: user_out_of_group});
+    } catch (error) {
+      Error = error;
+      console.log(error);
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
+
+  });
 
 });
