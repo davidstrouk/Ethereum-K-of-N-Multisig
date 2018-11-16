@@ -4,8 +4,8 @@ pragma solidity ^0.4.24;
 //-------------------------- KofNMultisig Contract --------------------------
 contract KofNMultisig {
   // Conatants
-  uint BLOCKS_TO_RESPOND = 20;
-  uint BLOCKS_TO_BLOCK = 50;
+  uint constant BLOCKS_TO_RESPOND = 20;
+  uint constant BLOCKS_TO_BLOCK = 50;
 
   struct Challenge {
     bool isActive;
@@ -38,6 +38,7 @@ contract KofNMultisig {
 	address penaltyWallet;
 	uint numberOfTransactions;
 
+  address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
 	uint constant penalty = 0.1 ether;  // should be total amount/K
 
 	// Initiliaze KofNMultisig contract
@@ -46,13 +47,14 @@ contract KofNMultisig {
   {
     require(wallets.length > 0,
       "There are no members in the group");
+    require(k > 0 && k <= wallets.length,
+        "K must be between 1 to N");
     N = wallets.length;
     K = k;
     for(uint i = 0; i < wallets.length ; i++) {
       usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
     }
 	  challenge = Challenge(false, 0, 0, 0);
-	  penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
 	  numberOfTransactions = 0;
 	}
 
@@ -83,16 +85,12 @@ contract KofNMultisig {
 	function respondToChallenge()
 	public
 	{
-    require(usersInGroup[msg.sender].wallet != 0,
-      "You dont belong to the group");
     require(usersInGroup[msg.sender].inGroup == true,
-      "You dont belong to the group anymore");
+      "You dont belong to the group");
 	  require(challenge.isActive == true,
-      "There is no challenge");
+      "There is no active challenge");
 	  require(msg.sender == challenge.target,
       "You are not the target of the challenge. You cant respond to it");
-      /* require(usersInGroup[msg.sender].inGroup == true,
-        "You waited too long to respond. Sorry"); */
 
     usersInGroup[msg.sender].challenged = false;
     challenge.isActive = false;

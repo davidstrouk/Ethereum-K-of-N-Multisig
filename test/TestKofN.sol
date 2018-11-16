@@ -30,7 +30,7 @@ contract TestKofN {
 	uint constant SIZE = 3;
 	uint constant K = 2;
 
-	function testConstructor() public {
+	/* function testConstructor() public {
 
 		KofNMultisig newContract = KofNMultisig(DeployedAddresses.KofNMultisig());
 
@@ -52,7 +52,7 @@ contract TestKofN {
 		Assert.equal(newContract.getChallengeStartBlock(), 0, "Wrong challengeStartBlock");
 
 		Assert.equal(newContract.getNumberOfTransactions(), 0, "Wrong numberOfTransactions");
-	}
+	} */
 
 	function testSendChallenge() public {
 
