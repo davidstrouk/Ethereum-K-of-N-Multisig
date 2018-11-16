@@ -147,9 +147,9 @@ contract KofNMultisig {
     require(amount > 0,
       "Please ask for a possitive amount");
 
+    numberOfTransactions++;
     ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
     ledger[numberOfTransactions].usersApproves[msg.sender] = true;
-    numberOfTransactions++;
 
 	}
 

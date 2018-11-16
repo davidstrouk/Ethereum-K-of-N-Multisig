@@ -304,21 +304,24 @@ contract('TestKofN', async (accounts) => {
     let amount = one_ether + valid_penalty;
     let instance4 = await KofNMultisig.new(users_in_group, _k);
 
-    var init_balance = await instance4.getBalance();
+    let init_balance = await instance4.getBalance();
     assert.equal(init_balance, 0, "Initial balance is wrong");
 
     let instance4_address = await instance4.getAddress();
     await web3.eth.sendTransaction({from: accounts[0], to: instance4_address, value: one_ether})
-    // assert.Equal()
+    let new_balance1 = await instance4.getBalance();
+    assert.equal(new_balance1, one_ether, "Balance is wrong");
     await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]})
-    await instance4.requestPayment(amount, user_out_of_group, {from: users_in_group[0]})
+    let new_balance2 = await instance4.getBalance();
+    assert.equal(new_balance2, one_ether + valid_penalty, "Balance is wrong");
+    ;await instance4.requestPayment(amount, user_out_of_group, {from: users_in_group[0]})
     try {
       await instance4.approvePayment(1, {from: users_in_group[1]});
     } catch (error) {
       Error = error;
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("Transaction number is wrong"), -1, "Require #2.2 Failed");
+    assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "Require #3 Failed");
 
   });
 
