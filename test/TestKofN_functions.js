@@ -491,7 +491,9 @@ contract('TestKofN', async (accounts) => {
     await instance5.requestPayment(amount, user_out_of_group, {from: users_in_group[0]});
 
     await instance5.approvePayment(1, {from: users_in_group[1]});
-    let zero_balance = instance5.
+    let zero_balance5 = instance5.getBalance();
+
+    assert.equal(zero_balance5, 0, "Balance is not correct");
 
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "Require #3 Failed");
