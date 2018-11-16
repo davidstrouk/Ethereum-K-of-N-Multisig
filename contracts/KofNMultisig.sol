@@ -38,7 +38,6 @@ contract KofNMultisig {
 	mapping (address => User) usersInGroup;
 	Challenge challenge;
 	mapping (uint => Transaction) ledger;
-	/* address penaltyWallet; */
 	uint numberOfTransactions;
 
 	// Initiliaze KofNMultisig contract
@@ -167,11 +166,10 @@ contract KofNMultisig {
       transaction.count++;
       if(transaction.count == K)
       {
-        if(challenge.isActive) {
+        if(challenge.isActive == true) {
           require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
             "There is not enough money to make the transfer");
         }
-        //ledger[txId] = Transaction(0, 0, 0, 0);
         _makePayment(transaction.amountToTransfer, transaction.receiver);
       }
     }
@@ -271,14 +269,6 @@ contract KofNMultisig {
     return challenge.startBlock;
   }
 
-  /* function getTransactionId(uint txId)
-  public
-  view
-  returns (uint)
-  {
-  	return ledger[txId].id;
-  } */
-
   function getTransactionReceiver(uint txId)
   public
   view
@@ -313,7 +303,7 @@ contract KofNMultisig {
 
   function getPenaltyWallet()
   public
-  view
+  pure
   returns (address)
   {
   	return penaltyWallet;
