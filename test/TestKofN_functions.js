@@ -299,8 +299,8 @@ contract('TestKofN', async (accounts) => {
         let instance3 = await KofNMultisig.new(users_in_group, _k);
 
         await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[0]});
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+        // res = await instance3.getTransactionId(transactions_iter);
+        // assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
         res = await instance3.getTransactionReceiver(transactions_iter);
         assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
         res = await instance3.getTransactionAmountToTransfer(transactions_iter);
@@ -317,8 +317,8 @@ contract('TestKofN', async (accounts) => {
         assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
 
         await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[1]});
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+        // res = await instance3.getTransactionId(transactions_iter);
+        // assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
         res = await instance3.getTransactionReceiver(transactions_iter);
         assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
         res = await instance3.getTransactionAmountToTransfer(transactions_iter);
@@ -336,8 +336,8 @@ contract('TestKofN', async (accounts) => {
         res = await instance3.getNumberOfTransactions();
         assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
 
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+        // res = await instance3.getTransactionId(transactions_iter);
+        // assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
         res = await instance3.getTransactionReceiver(transactions_iter);
         assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
         res = await instance3.getTransactionAmountToTransfer(transactions_iter);

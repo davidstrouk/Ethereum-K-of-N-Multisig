@@ -38,7 +38,7 @@ contract KofNMultisig {
 	mapping (address => User) usersInGroup;
 	Challenge challenge;
 	mapping (uint => Transaction) ledger;
-	address penaltyWallet;
+	/* address penaltyWallet; */
 	uint numberOfTransactions;
 
 	// Initiliaze KofNMultisig contract
@@ -271,13 +271,13 @@ contract KofNMultisig {
     return challenge.startBlock;
   }
 
-  function getTransactionId(uint txId)
+  /* function getTransactionId(uint txId)
   public
   view
   returns (uint)
   {
   	return ledger[txId].id;
-  }
+  } */
 
   function getTransactionReceiver(uint txId)
   public
