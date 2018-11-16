@@ -67,7 +67,7 @@ contract TestKofN {
 		// Test Require #2
 	}
 
-	function print(address add) public returns (address) {
+	function print(address add) public pure returns (address) {
   		return add;
   	}
 }
