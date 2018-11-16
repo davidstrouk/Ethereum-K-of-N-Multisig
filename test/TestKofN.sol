@@ -29,7 +29,7 @@ contract TestKofN {
 	address user3 = 0x81BE0A9D2C6F7880643477207875b30dD2C514d4;
 	uint constant SIZE = 3;
 
-	function testConstructor() public {
+	/* function testConstructor() public {
 
 		KofNMultisig newContract = KofNMultisig(DeployedAddresses.KofNMultisig());
 
@@ -51,7 +51,7 @@ contract TestKofN {
 		Assert.equal(newContract.getChallengeStartBlock(), 0, "Wrong challengeStartBlock");
 
 		Assert.equal(newContract.getNumberOfTransactions(), 0, "Wrong numberOfTransactions");
-	}
+	} */
 
 	function testSendChallenge() public {
 
