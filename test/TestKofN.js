@@ -325,97 +325,97 @@ contract('TestKofN', async (accounts) => {
 
   it("testRequestPayment", async () => {
 
-        var Error;
-        var res;
-        var transactions_iter = 1;
+    var Error;
+    var res;
+    var transactions_iter = 1;
 
-        // ----------------------REQUIRE #1--------------------------
-        let instance1 = await KofNMultisig.new(users_in_group, _k);
-        try {
-         await instance1.requestPayment(amount_to_transfer, external_wallet, {from: user_out_of_group});
-        } catch (error) {
-            Error = error;
-        }
-        assert.notEqual(Error, undefined, 'Error must be thrown');
-        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
+    // ----------------------REQUIRE #1--------------------------
+    let instance1 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance1.requestPayment(amount_to_transfer, external_wallet, {from: user_out_of_group});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
 
-        // ----------------------REQUIRE #2--------------------------
-        let instance2 = await KofNMultisig.new(users_in_group, _k);
-        try {
-          await instance2.requestPayment(0, external_wallet, {from: users_in_group[0]});
-        } catch (error) {
-            Error = error;
-        }
-        assert.notEqual(Error, undefined, 'Error must be thrown');
-        assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.1 Failed");
+    // ----------------------REQUIRE #2--------------------------
+    let instance2 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance2.requestPayment(0, external_wallet, {from: users_in_group[0]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.1 Failed");
 
-        try {
-          await instance2.requestPayment(-amount_to_transfer, external_wallet, {from: users_in_group[0]});
-        } catch (error) {
-            Error = error;
-        }
-        assert.notEqual(Error, undefined, 'Error must be thrown');
-        assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.2 Failed");
+    try {
+      await instance2.requestPayment(-amount_to_transfer, external_wallet, {from: users_in_group[0]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.2 Failed");
 
-        // ----------------------FUNCTION TEST--------------------------
-        let instance3 = await KofNMultisig.new(users_in_group, _k);
+    // ----------------------FUNCTION TEST--------------------------
+    let instance3 = await KofNMultisig.new(users_in_group, _k);
 
-        await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[0]});
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
-        res = await instance3.getTransactionReceiver(transactions_iter);
-        assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
-        res = await instance3.getTransactionAmountToTransfer(transactions_iter);
-        assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
-        res = await instance3.getTransactionCount(transactions_iter);
-        assert.equal(res.toString(), 1, "transaction.count is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
-        assert.equal(res, true, "transaction.approve.sender is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
-        assert.equal(res, false, "transaction.approve.otherMember is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
-        assert.equal(res, false, "transaction.approve.otherMember is invalid");
-        res = await instance3.getNumberOfTransactions();
-        assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
+    await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[0]});
+    res = await instance3.getTransactionId(transactions_iter);
+    assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+    res = await instance3.getTransactionReceiver(transactions_iter);
+    assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
+    res = await instance3.getTransactionAmountToTransfer(transactions_iter);
+    assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
+    res = await instance3.getTransactionCount(transactions_iter);
+    assert.equal(res.toString(), 1, "transaction.count is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
+    assert.equal(res, true, "transaction.approve.sender is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
+    assert.equal(res, false, "transaction.approve.otherMember is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
+    assert.equal(res, false, "transaction.approve.otherMember is invalid");
+    res = await instance3.getNumberOfTransactions();
+    assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
 
-        await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[1]});
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
-        res = await instance3.getTransactionReceiver(transactions_iter);
-        assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
-        res = await instance3.getTransactionAmountToTransfer(transactions_iter);
-        assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
-        res = await instance3.getTransactionCount(transactions_iter);
-        assert.equal(res.toString(), 1, "transaction.count is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
-        assert.equal(res, true, "transaction.approve.sender is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
-        assert.equal(res, false, "transaction.approve.otherMember is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
-        assert.equal(res, false, "transaction.approve.otherMember is invalid");
+    await instance3.requestPayment(amount_to_transfer, external_wallet, {from: users_in_group[1]});
+    res = await instance3.getTransactionId(transactions_iter);
+    assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+    res = await instance3.getTransactionReceiver(transactions_iter);
+    assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
+    res = await instance3.getTransactionAmountToTransfer(transactions_iter);
+    assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
+    res = await instance3.getTransactionCount(transactions_iter);
+    assert.equal(res.toString(), 1, "transaction.count is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
+    assert.equal(res, true, "transaction.approve.sender is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
+    assert.equal(res, false, "transaction.approve.otherMember is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
+    assert.equal(res, false, "transaction.approve.otherMember is invalid");
 
-        transactions_iter++;
-        res = await instance3.getNumberOfTransactions();
-        assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
+    transactions_iter++;
+    res = await instance3.getNumberOfTransactions();
+    assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
 
-        res = await instance3.getTransactionId(transactions_iter);
-        assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
-        res = await instance3.getTransactionReceiver(transactions_iter);
-        assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
-        res = await instance3.getTransactionAmountToTransfer(transactions_iter);
-        assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
-        res = await instance3.getTransactionCount(transactions_iter);
-        assert.equal(res.toString(), 1, "transaction.count is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
-        assert.equal(res, false, "transaction.approve.sender is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
-        assert.equal(res, true, "transaction.approve.otherMember is invalid");
-        res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
-        assert.equal(res, false, "transaction.approve.otherMember is invalid");
-        res = await instance3.getNumberOfTransactions();
-        assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
+    res = await instance3.getTransactionId(transactions_iter);
+    assert.equal(res.toString(), transactions_iter, "transaction.Id is invalid");
+    res = await instance3.getTransactionReceiver(transactions_iter);
+    assert.equal(res.toString(), external_wallet.toLowerCase(), "transaction.receiver is invalid");
+    res = await instance3.getTransactionAmountToTransfer(transactions_iter);
+    assert.equal(res.toString(), amount_to_transfer, "transaction.amountToTransfer is invalid");
+    res = await instance3.getTransactionCount(transactions_iter);
+    assert.equal(res.toString(), 1, "transaction.count is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[0]);
+    assert.equal(res, false, "transaction.approve.sender is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[1]);
+    assert.equal(res, true, "transaction.approve.otherMember is invalid");
+    res = await instance3.getTransactionUsersApprove(transactions_iter, users_in_group[2]);
+    assert.equal(res, false, "transaction.approve.otherMember is invalid");
+    res = await instance3.getNumberOfTransactions();
+    assert.equal(res.toString(), transactions_iter, "NumberOfTransactions is invalid");
 
-        });
+  });
 
   it("testApprovePayment", async () => {
 
