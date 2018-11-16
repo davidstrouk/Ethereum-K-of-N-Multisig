@@ -162,11 +162,6 @@ contract KofNMultisig {
     require(txId > 0 && ledger[txId].id == txId,
       "Transaction number is wrong");
 
-    if(challenge.isActive) {
-      require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
-        "There is not enough money to make the transfer");
-    }
-
     Transaction storage transaction = ledger[txId];
     if(transaction.usersApproves[msg.sender] == false)  // check if condition is valid
     {
@@ -174,6 +169,10 @@ contract KofNMultisig {
       transaction.count++;
       if(transaction.count == K)
       {
+        if(challenge.isActive) {
+          require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
+            "There is not enough money to make the transfer");
+        }
         //ledger[txId] = Transaction(0, 0, 0, 0);
         _makePayment(transaction.amountToTransfer, transaction.receiver);
       }
