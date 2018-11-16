@@ -3,9 +3,12 @@ pragma solidity ^0.4.24;
 
 //-------------------------- KofNMultisig Contract --------------------------
 contract KofNMultisig {
+
   // Conatants
   uint constant BLOCKS_TO_RESPOND = 20;
   uint constant BLOCKS_TO_BLOCK = 50;
+  address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
+  uint constant penalty = 0.1 ether;  // should be total amount/K
 
   struct Challenge {
     bool isActive;
@@ -15,7 +18,7 @@ contract KofNMultisig {
   }
 
   struct Transaction {
-    uint id;
+    /* uint id; */
     address receiver;
     uint amountToTransfer;
     uint count;
@@ -37,9 +40,6 @@ contract KofNMultisig {
 	mapping (uint => Transaction) ledger;
 	address penaltyWallet;
 	uint numberOfTransactions;
-
-  address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
-	uint constant penalty = 0.1 ether;  // should be total amount/K
 
 	// Initiliaze KofNMultisig contract
   constructor(address[] wallets, uint k)
@@ -63,13 +63,13 @@ contract KofNMultisig {
 	payable
 	public
 	{
-	   require(usersInGroup[msg.sender].wallet != 0,
+	   require(usersInGroup[msg.sender].inGroup == true,
        "You dont belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
 	   require(challenge.isActive == false,
        "There is already a published challenge");
 	   require(msg.value >= penalty,
        "You dont have enough money to pay the penalty");
-	   require(usersInGroup[target].wallet != 0,
+	   require(usersInGroup[target].inGroup == true,
        "Your target doesnt belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
 	   require(usersInGroup[msg.sender].lastChallengeBlock == 0
        || block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK,
@@ -146,7 +146,7 @@ contract KofNMultisig {
       "Please ask for a possitive amount");
 
     numberOfTransactions++;
-    ledger[numberOfTransactions] = Transaction(numberOfTransactions, to, amount, 1);
+    ledger[numberOfTransactions] = Transaction(to, amount, 1);
     ledger[numberOfTransactions].usersApproves[msg.sender] = true;
 
 	}
@@ -157,7 +157,7 @@ contract KofNMultisig {
   {
     require(usersInGroup[msg.sender].inGroup == true,
       "You dont belong to the group");
-    require(txId > 0 && ledger[txId].id == txId,
+    require(txId > 0 && txId <= numberOfTransactions,
       "Transaction number is wrong");
 
     Transaction storage transaction = ledger[txId];
