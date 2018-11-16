@@ -18,13 +18,9 @@ contract('TestKofN', async (accounts) => {
 
   const users_in_group = [accounts[0], accounts[1], accounts[2]];
   const _k = 2;
-<<<<<<< HEAD
-  const user_out_of_group = "0x09b537A522072DFc8B56626428dF82263F6bd21e";
   const external_wallet = "0xB7cC9D851FbF7A445387cAC079a045309B5893F8";
-=======
   const user_out_of_group = accounts[3];
   const one_ether = 1000000000000000000; // 1 ether
->>>>>>> dcd957311a8a369c9ee08b768a582950e1d8a4ba
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const amount_to_transfer = 10000000000000000; //0.01 ether
@@ -195,24 +191,7 @@ contract('TestKofN', async (accounts) => {
           Error = error;
       }
       assert.notEqual(Error, undefined, 'Error must be thrown');
-<<<<<<< HEAD
       assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1.1 Failed");
-=======
-      assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
-
-// TBD: ask david
-      // // ----------------------REQUIRE #2--------------------------
-      // let instance2 = await KofNMultisig.new(users_in_group);
-      // await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-      // waitNBlocks(BLOCKS_TO_RESPOND+1);
-      // try {
-      //   await instance2.respondToChallenge({from: users_in_group[1]});
-      // } catch (error) {
-      //     Error = error;
-      // }
-      // assert.notEqual(Error, undefined, 'Error must be thrown');
-      // assert.isAbove(Error.message.search("You dont belong to the group anymore"), -1, "Require #2 Failed");
->>>>>>> dcd957311a8a369c9ee08b768a582950e1d8a4ba
 
       await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
       waitNBlocks(BLOCKS_TO_RESPOND+1);
@@ -282,7 +261,6 @@ contract('TestKofN', async (accounts) => {
 
       });
 
-<<<<<<< HEAD
       it("testRequestPayment", async () => {
 
         var Error;
@@ -416,7 +394,7 @@ contract('TestKofN', async (accounts) => {
           assert.equal(res, users_in_group.length, "N is invalid");
           res = await instance3.getK();
           assert.equal(res, _k, "K is invalid");
-          
+
           for (i=0; i<users_in_group.length; i++) {
             res = await instance3.getUserWallet(accounts[i]);
             assert.equal(res, accounts[i], "user.wallet."+[i]+" is invalid");
@@ -441,7 +419,7 @@ contract('TestKofN', async (accounts) => {
           assert.equal(res, 0, "numberOfTransactionsis invalid");
 
           });
-=======
+
   it("testApprovePayment", async () => {
 
     var Error;
@@ -519,6 +497,5 @@ contract('TestKofN', async (accounts) => {
     assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "Require #3 Failed");
 
   });
->>>>>>> dcd957311a8a369c9ee08b768a582950e1d8a4ba
 
 });
