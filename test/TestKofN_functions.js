@@ -17,9 +17,14 @@ const waitNBlocks = async n => {
 contract('Test K-of-N Functions', async (accounts) => {
 
   const users_in_group = [accounts[0], accounts[1], accounts[2]];
+  const david_address = accounts[0];
+  const barak_address = accounts[1];
+  const shoval_address = accounts[2];
+  const ruhama_address = accounts[3];
+  const four_users_in_group = [david_address, barak_address, shoval_address, ruhama_address];
   const _k = 2;
   const external_wallet = "0xB7cC9D851FbF7A445387cAC079a045309B5893F8";
-  const user_out_of_group = accounts[3];
+  const user_out_of_group = accounts[4];
   const one_ether = 1000000000000000000; // 1 ether
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
@@ -153,7 +158,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     let instance5 = await KofNMultisig.new(users_in_group, _k);
     await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
     await instance5.respondToChallenge({from: users_in_group[1]});
-    waitNBlocks(1);
+    await waitNBlocks(1);
     try {
      await instance5.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
     } catch (error) {
@@ -194,7 +199,7 @@ contract('Test K-of-N Functions', async (accounts) => {
 
     ////// WORK IN PROGRESS ///////
     await instance6.respondToChallenge({from: users_in_group[1]});
-    waitNBlocks(BLOCKS_TO_RESPOND);
+    await waitNBlocks(BLOCKS_TO_RESPOND);
     try {
      await instance6.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
     } catch (error) {
@@ -211,33 +216,61 @@ contract('Test K-of-N Functions', async (accounts) => {
     // ----------------------REQUIRE #1--------------------------
     let instance1 = await KofNMultisig.new(users_in_group, _k);
     try {
-      await instance1.tryToRemoveChallengedUser();
+      await instance1.tryToRemoveChallengedUser({from: user_out_of_group});
     } catch (error) {
       Error = error;
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("There is no challenge"), -1, "Require #1 Failed");
+    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1 Failed");
+
+    // ----------------------REQUIRE #2--------------------------
+    let instance2 = await KofNMultisig.new(users_in_group, _k);
+    try {
+      await instance2.tryToRemoveChallengedUser();
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("There is no challenge"), -1, "Require #2 Failed");
 
 
     // ----------------------NORMAL BEHAVIOR TEST (WITH REMOVAL)--------------------------
-    let instance2 = await KofNMultisig.new(users_in_group, _k);
-    // Good challenge
-    await instance2.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-    waitNBlocks(BLOCKS_TO_RESPOND + 2);
-    await instance2.tryToRemoveChallengedUser();
-
-    res = await instance2.getUserInGroup(users_in_group[1]);
-    assert.equal(res, false, "User has not been removed from group");
-
-    // ----------------------NORMAL BEHAVIOR TEST (WITHOUT REMOVAL)--------------------------
     let instance3 = await KofNMultisig.new(users_in_group, _k);
     // Good challenge
     await instance3.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-    res = await instance3.getChallengeStartBlock();
+    await waitNBlocks(BLOCKS_TO_RESPOND + 2);
     await instance3.tryToRemoveChallengedUser();
 
     res = await instance3.getUserInGroup(users_in_group[1]);
+    assert.equal(res, false, "User has not been removed from group");
+
+    // ----------------------NORMAL BEHAVIOR TEST (WITHOUT REMOVAL)--------------------------
+    let instance4 = await KofNMultisig.new(users_in_group, _k);
+    // Good challenge
+    await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+    res = await instance4.getChallengeStartBlock();
+    await instance4.tryToRemoveChallengedUser();
+
+    res = await instance4.getUserInGroup(users_in_group[1]);
     assert.equal(res, true, "User has been removed from group");
+
+    // ----------------------REQUIRE #3--------------------------
+    let instance5 = await KofNMultisig.new(four_users_in_group, _k);
+    await instance5.sendChallenge(shoval_address, {value: valid_penalty, from: david_address});
+    await waitNBlocks(BLOCKS_TO_RESPOND + 1);
+
+    await instance5.tryToRemoveChallengedUser();
+    res = await instance5.getUserInGroup(shoval_address);
+    assert.equal(res, false, "User has not been removed from group");
+
+    // await instance5.sendChallenge(ruhama_address, {value: valid_penalty, from: david_address});
+    // try {
+    //   await instance5.tryToRemoveChallengedUser({from: barak_address});
+    // } catch (error) {
+    //   Error = error;
+    // }
+    // assert.notEqual(Error, undefined, 'Error must be thrown');
+    // assert.isAbove(Error.message.search("The user was already removed from the group"), -1, "Require #3 Failed");
 
   });
 
@@ -257,7 +290,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "Require #1.1 Failed");
 
     await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-    waitNBlocks(BLOCKS_TO_RESPOND+1);
+    await waitNBlocks(BLOCKS_TO_RESPOND+1);
     try {
       await instance1.respondToChallenge({from: users_in_group[1]});
     } catch (error) {
@@ -306,7 +339,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     res = await instance4.getChallengeIsActive();
     assert.equal(res, true, "challenge.isActive is invalid");
 
-    waitNBlocks(BLOCKS_TO_RESPOND/2);
+    await waitNBlocks(BLOCKS_TO_RESPOND/2);
     await instance4.respondToChallenge({from: users_in_group[1]});
 
     res = await instance4.getUserChallenged(users_in_group[1]);
