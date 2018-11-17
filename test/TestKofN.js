@@ -95,8 +95,7 @@ contract('TestKofN', async (accounts) => {
         // user 3 dont respond to txId=2 and remove from the group
         await instance1.approvePayment(2, {from: users_in_group[2]});
         await instance1.sendChallenge(users_in_group[3], {value: valid_penalty, from: users_in_group[4]});
-        await waitNBlocks(BLOCKS_TO_RESPOND
-        );
+        await waitNBlocks(BLOCKS_TO_RESPOND);
         await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
         try {
           await instance1.respondToChallenge({from: users_in_group[3]});
@@ -108,6 +107,62 @@ contract('TestKofN', async (accounts) => {
         res = await instance1.getK();
         assert.equal(res, users_in_group.length-1, "new K is invalid");
 
+        // user 0 send a challenge to himself and respond
+        await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: users_in_group[0]});
+        await waitNBlocks(5);
+        await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
+        res = await instance1.getK();
+        assert.equal(res, users_in_group.length-1, "new K is invalid");
+        await instance1.respondToChallenge({from: users_in_group[0]});
+        res = await instance1.getUserInGroup(users_in_group[0]);
+        assert.equal(res, true, "user.inGroup is invalid");
+
+        // user 1 send a challenge to himself and dont respond
+        await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[1]});
+        await waitNBlocks(BLOCKS_TO_RESPOND);
+        await instance1.tryToRemoveChallengedUser({from: users_in_group[4]});
+        res = await instance1.getUserInGroup(users_in_group[1]);
+        assert.equal(res, false, "user.inGroup is invalid");
+        res = await instance1.getK();
+        assert.equal(res, users_in_group.length-2, "new K is invalid");
+
+        // user 3 try to use the contract
+        try {
+          await instance1.sendChallenge(users_in_group[1], {from: users_in_group[3]});
+        } catch (error) {
+          Error = error;
+        }
+        assert.notEqual(Error, undefined, 'Error must be thrown');
+        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "sendChallenge error");
+        try {
+          await instance1.respondToChallenge({from: users_in_group[3]});
+        } catch (error) {
+          Error = error;
+        }
+        assert.notEqual(Error, undefined, 'Error must be thrown');
+        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "respondToChallenge error");
+        try {
+          await instance1.tryToRemoveChallengedUser({from: users_in_group[3]});
+        } catch (error) {
+          Error = error;
+        }
+        assert.notEqual(Error, undefined, 'Error must be thrown');
+        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "tryToRemoveChallengedUser error");
+
+        try {
+          await instance1.requestPayment(6, users_in_group[3], {from: users_in_group[3]});
+        } catch (error) {
+          Error = error;
+        }
+        assert.notEqual(Error, undefined, 'Error must be thrown');
+        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
+        try {
+          await instance1.approvePayment(2,{from: users_in_group[3]});
+        } catch (error) {
+          Error = error;
+        }
+        assert.notEqual(Error, undefined, 'Error must be thrown');
+        assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
       });
 
 
