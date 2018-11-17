@@ -21,6 +21,7 @@ contract('Test K-of-N Functions', async (accounts) => {
   const barak_address = accounts[1];
   const shoval_address = accounts[2];
   const ruhama_address = accounts[3];
+  const one_user_in_group = [david_address];
   const four_users_in_group = [david_address, barak_address, shoval_address, ruhama_address];
   const _k = 2;
   const external_wallet = "0xB7cC9D851FbF7A445387cAC079a045309B5893F8";
@@ -574,6 +575,22 @@ contract('Test K-of-N Functions', async (accounts) => {
     let zero_balance6 = await instance6.getBalance();
     assert.equal(zero_balance6, 0, "Balance is not correct");
 
+    // ----------------------TEST 7: ONLY ONE PERSON IN GROUP--------------------------
+    let instance7 = await KofNMultisig.new(one_user_in_group, 1);
+
+    let init_balance7 = await instance7.getBalance();
+    assert.equal(init_balance7, 0, "Initial balance is wrong");
+
+    let instance7_address = await instance7.getAddress();
+    await web3.eth.sendTransaction({from: accounts[0], to: instance7_address, value: one_ether});
+    let new_balance7 = await instance7.getBalance();
+    assert.equal(new_balance7, one_ether, "Balance is wrong");
+    await instance7.requestPayment(one_ether, user_out_of_group, {from: david_address});
+
+    // no need to call "approvePayment" here since there is only one user
+
+    let zero_balance7 = await instance7.getBalance();
+    assert.equal(zero_balance7, 0, "Balance is not correct");
   });
 
 });
