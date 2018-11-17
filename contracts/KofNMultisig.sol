@@ -111,6 +111,7 @@ contract KofNMultisig {
       "The user was already removed from the group");
 	  if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
 	    _removeFromGroup(challenge.target);
+      challenge.isActive = false;
 	  }
 	}
 

@@ -254,7 +254,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     res = await instance4.getUserInGroup(users_in_group[1]);
     assert.equal(res, true, "User has been removed from group");
 
-    // ----------------------REQUIRE #3--------------------------
+    // ----------------------CALL FUNCTION UNTIL K IS DECREMENTED--------------------------
     let instance5 = await KofNMultisig.new(four_users_in_group, _k);
     await instance5.sendChallenge(shoval_address, {value: valid_penalty, from: david_address});
     await waitNBlocks(BLOCKS_TO_RESPOND + 1);
@@ -262,16 +262,52 @@ contract('Test K-of-N Functions', async (accounts) => {
     await instance5.tryToRemoveChallengedUser();
     res = await instance5.getUserInGroup(shoval_address);
     assert.equal(res, false, "User has not been removed from group");
+    res = await instance5.getN();
+    assert.equal(res, 3, "N is wrong");
+    res = await instance5.getK();
+    assert.equal(res, _k, "K is wrong");
+    res = await instance5.getChallengeIsActive();
+    assert.equal(res, false, "challenge.isActive is wrong");
 
-    // await instance5.sendChallenge(ruhama_address, {value: valid_penalty, from: david_address});
-    // try {
-    //   await instance5.tryToRemoveChallengedUser({from: barak_address});
-    // } catch (error) {
-    //   Error = error;
-    // }
-    // assert.notEqual(Error, undefined, 'Error must be thrown');
-    // assert.isAbove(Error.message.search("The user was already removed from the group"), -1, "Require #3 Failed");
+    await instance5.sendChallenge(ruhama_address, {value: valid_penalty, from: david_address});
+    await instance5.tryToRemoveChallengedUser({from: barak_address});
 
+    res = await instance5.getUserInGroup(ruhama_address);
+    assert.equal(res, true, "User has not been removed from group");
+    res = await instance5.getN();
+    assert.equal(res, 3, "N is wrong");
+    res = await instance5.getK();
+    assert.equal(res, _k, "K is wrong");
+    res = await instance5.getChallengeIsActive();
+    assert.equal(res, true, "challenge.isActive is wrong");
+
+    await waitNBlocks(BLOCKS_TO_RESPOND + 1);
+
+    await instance5.tryToRemoveChallengedUser({from: barak_address});
+
+    res = await instance5.getUserInGroup(ruhama_address);
+    assert.equal(res, false, "User has not been removed from group");
+    res = await instance5.getN();
+    assert.equal(res, 2, "N is wrong");
+    res = await instance5.getK();
+    assert.equal(res, _k, "K is wrong");
+    res = await instance5.getChallengeIsActive();
+    assert.equal(res, false, "challenge.isActive is wrong");
+
+    await instance5.sendChallenge(barak_address, {value: valid_penalty, from: david_address});
+
+    await waitNBlocks(BLOCKS_TO_RESPOND + 1);
+
+    await instance5.tryToRemoveChallengedUser({from: david_address});
+
+    res = await instance5.getUserInGroup(ruhama_address);
+    assert.equal(res, false, "User has not been removed from group");
+    res = await instance5.getN();
+    assert.equal(res, 1, "N is wrong");
+    res = await instance5.getK();
+    assert.equal(res, 1, "K is wrong");
+    res = await instance5.getChallengeIsActive();
+    assert.equal(res, false, "challenge.isActive is wrong");
   });
 
   it("testRespondToChallenge", async () => {
