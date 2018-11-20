@@ -25,6 +25,8 @@ contract('Test K-of-N', async (accounts) => {
   const invalid_penalty = 10000000000000000; //0.01 ether
   const amount_to_transfer = 10000000000000000; //0.01 ether
   const BLOCKS_TO_RESPOND = 20;
+  const BLOCKS_TO_BLOCK = 50;
+
 
   it("General Test K = N", async () => {
     var Error;
@@ -165,22 +167,52 @@ contract('Test K-of-N', async (accounts) => {
 
     // check data about transaction 2
     res = await instance1.getTransactionCount(2);
-    assert.equal(res.toString(), 4, "transaction.count invalid");
+    assert.equal(res.toString(), 4, "transaction.count is invalid");
     res = await instance1.getTransactionUsersApprove(2, users_in_group[1]);
-    assert.equal(res, true, "transaction.approve invalid");
+    assert.equal(res, true, "transaction.approve is invalid");
     res = await instance1.getTransactionUsersApprove(2, users_in_group[3]);
-    assert.equal(res, false, "transaction.approve invalid");
+    assert.equal(res, false, "transaction.approve is invalid");
 
     // user 2 approve transaction and then get out of the group
-    res = await instance1.getBalance();
-    console.log('balance: %d',res);
+    await waitNBlocks(BLOCKS_TO_BLOCK);
     await instance1.requestPayment(eight_ether, accounts[8], {from: users_in_group[0]});
+    await instance1.approvePayment(3,{from: users_in_group[2]});
+    await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[0]});
+    await waitNBlocks(BLOCKS_TO_RESPOND);
+    await instance1.tryToRemoveChallengedUser({from: users_in_group[0]});
+    res = await instance1.getUserInGroup(users_in_group[2]);
+    assert.equal(res, false, "user.inGroup is invalid");
+    try {
+    await instance1.approvePayment(4,{from: users_in_group[4]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    // assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
+
+// check with david what happen in this case: 3 people in the group, 1 approve and then get off the group, whst happen when the third user approve???
+// check the balance if transaction should happen or not
 
 
+    // transaction approve by all users but there is not enough money
+    var balance = await instance1.getBalance();
+    await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
+    try {
+    await instance1.approvePayment(4,{from: users_in_group[4]});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
 
-
-    // check the case that transactions approve by all members but there is not enough money
-    // use: getBalance()
+    // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
+    web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+    var balance2 = await instance1.getBalance();
+    console.log('balance: %d',balance2);
+    await instance1.approvePayment(4, {from: users_in_group[4]});
+    res = await instance1.getBalance();
+    console.log('after balance: %d',res);
+    assert.equal(res, balance2, "approvePayment error");
 
 
   });
