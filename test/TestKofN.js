@@ -20,6 +20,7 @@ contract('Test K-of-N', async (accounts) => {
   const user_out_of_group = accounts[9];
   const one_ether = 1000000000000000000; // 1 ether
   const ten_ether = 10000000000000000000; // 10 ether
+  const eight_ether = 8000000000000000000; // 8 ether
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const amount_to_transfer = 10000000000000000; //0.01 ether
@@ -161,6 +162,27 @@ contract('Test K-of-N', async (accounts) => {
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
+
+    // check data about transaction 2
+    res = await instance1.getTransactionCount(2);
+    assert.equal(res.toString(), 4, "transaction.count invalid");
+    res = await instance1.getTransactionUsersApprove(2, users_in_group[1]);
+    assert.equal(res, true, "transaction.approve invalid");
+    res = await instance1.getTransactionUsersApprove(2, users_in_group[3]);
+    assert.equal(res, false, "transaction.approve invalid");
+
+    // user 2 approve transaction and then get out of the group
+    res = await instance1.getBalance();
+    console.log('balance: %d',res);
+    await instance1.requestPayment(eight_ether, accounts[8], {from: users_in_group[0]});
+
+
+
+
+    // check the case that transactions approve by all members but there is not enough money
+    // use: getBalance()
+
+
   });
 
   it("General Test K < N", async () => {
