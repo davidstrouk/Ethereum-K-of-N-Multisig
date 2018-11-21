@@ -209,7 +209,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
   });
-  
+
   it("testTryToRemoveChallengedUser", async () => {
     var Error;
     var res;
@@ -417,7 +417,7 @@ contract('Test K-of-N Functions', async (accounts) => {
       Error = error;
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.1 Failed");
+    assert.isAbove(Error.message.search("Please ask for a positive amount"), -1, "Require #2.1 Failed");
 
     try {
       await instance2.requestPayment(-amount_to_transfer, external_wallet, {from: users_in_group[0]});
@@ -425,7 +425,7 @@ contract('Test K-of-N Functions', async (accounts) => {
       Error = error;
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("Please ask for a possitive amount"), -1, "Require #2.2 Failed");
+    assert.isAbove(Error.message.search("Please ask for a positive amount"), -1, "Require #2.2 Failed");
 
     // ----------------------FUNCTION TEST--------------------------
     let instance3 = await KofNMultisig.new(users_in_group, _k);
