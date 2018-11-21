@@ -193,25 +193,25 @@ contract('Test K-of-N', async (accounts) => {
 // check the balance if transaction should happen or not
 
 
-    // transaction approve by all users but there is not enough money
-    var balance = await instance1.getBalance();
-    await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
-    try {
-    await instance1.approvePayment(4,{from: users_in_group[4]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
-
-    // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
-    web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
-    var balance2 = await instance1.getBalance();
-    console.log('balance: %d',balance2);
-    await instance1.approvePayment(4, {from: users_in_group[4]});
-    res = await instance1.getBalance();
-    console.log('after balance: %d',res);
-    assert.equal(res, balance2, "approvePayment error");
+    // // transaction approve by all users but there is not enough money
+    // var balance = await instance1.getBalance();
+    // await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
+    // try {
+    // await instance1.approvePayment(4,{from: users_in_group[4]});
+    // } catch (error) {
+    //   Error = error;
+    // }
+    // assert.notEqual(Error, undefined, 'Error must be thrown');
+    // assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
+    //
+    // // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
+    // web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+    // var balance2 = await instance1.getBalance();
+    // console.log('balance: %d',balance2);
+    // await instance1.approvePayment(4, {from: users_in_group[4]});
+    // res = await instance1.getBalance();
+    // console.log('after balance: %d',res);
+    // assert.equal(res, balance2, "approvePayment error");
 
 
   });
@@ -309,13 +309,13 @@ contract('Test K-of-N', async (accounts) => {
     assert.equal(res, 3, "K is wrong");
 
     // David is out of group and he tries to request a payment: receives error
-    try {
-      await instance.requestPayment(aaron_address, {from: david_address});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
+    // try {
+    //   await instance.requestPayment(aaron_address, {from: david_address});
+    // } catch (error) {
+    //   Error = error;
+    // }
+    // assert.notEqual(Error, undefined, 'Error must be thrown');
+    // assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
 
 
   });
