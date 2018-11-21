@@ -143,7 +143,7 @@ contract KofNMultisig {
     require(usersInGroup[msg.sender].inGroup == true,
       "You dont belong to the group");
     require(amount > 0,
-      "Please ask for a possitive amount");
+      "Please ask for a positive amount");
 
     numberOfTransactions++;
     ledger[numberOfTransactions] = Transaction(to, amount, 0);

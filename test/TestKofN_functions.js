@@ -209,7 +209,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "Require #5 Failed");
   });
-
+  
   it("testTryToRemoveChallengedUser", async () => {
     var Error;
     var res;
