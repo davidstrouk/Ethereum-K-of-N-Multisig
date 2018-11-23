@@ -40,7 +40,15 @@ contract KofNMultisig {
 	mapping (uint => Transaction) ledger;
 	uint numberOfTransactions;
 
-	// Initiliaze KofNMultisig contract
+  /**
+  @notice Initiliaze KofNMultisig contract
+  @dev (description)
+  @param wallets (description)
+  @param k (description)
+  @return {
+    "test": "test"
+  }
+  */
   constructor(address[] wallets, uint k)
   public
   {
