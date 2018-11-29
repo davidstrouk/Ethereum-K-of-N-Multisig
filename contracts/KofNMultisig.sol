@@ -42,11 +42,11 @@ contract KofNMultisig {
 
   /**
   @notice Initiliaze KofNMultisig contract
-  @dev (description)
-  @param wallets (description)
-  @param k (description)
+  @dev Initiliaze KofNMultisig contract with N wallets and K approvals
+  @param wallets The wallets addresses of the N users
+  @param k The size of required approvals
   @return {
-    "test": "test"
+    "KofNMultisig": "New KofNMultisig contract"
   }
   */
   constructor(address[] wallets, uint k)
@@ -87,6 +87,12 @@ contract KofNMultisig {
 	   usersInGroup[target].challenged = true;
 	}
 
+  /**
+  @notice Respond to the published challenge
+  @dev Challenge's target respond to the published challenge. Levy the shared wallet an amount of penalty
+  @return {
+  }
+  */
 	// Check if the function caller is the challenger’s target, answer the challenge if yes
 	// and take a fee from the contract wallet
 	function respondToChallenge()
@@ -143,7 +149,14 @@ contract KofNMultisig {
     }
   }
 
-
+  /**
+  @notice Request for payment to external address
+  @dev Request to transfer an amount of ether from the shared wallet to another address
+  @param amount The requested amount of Wei to transfer
+  @param to The destination address of the payment
+  @return {
+  }
+  */
 	// indicates the consent of msg.sender to transfer “amount” to address “to”
 	function requestPayment(uint amount, address to)
 	public
@@ -198,7 +211,13 @@ contract KofNMultisig {
   {}
 
   //-------------------------- KofNMultisig TEST FUNCTIONS -------------------
-
+  /**
+  @notice Get N
+  @dev test use - ???? maybe add to all test functions????? or maybe remove????
+  @return {
+    "N": "Number of active users in the group"
+  }
+  */
   function getN()
   public
   view
@@ -207,6 +226,12 @@ contract KofNMultisig {
     return N;
   }
 
+  /**
+  @notice Get K
+  @return {
+    "K": "Number of arequired pprovals"
+  }
+  */
   function getK()
   public
   view
@@ -215,6 +240,13 @@ contract KofNMultisig {
     return K;
   }
 
+  /**
+  @notice Get user wallet
+  @param userAddress The address of the user
+  @return {
+    "wallet": "The wallet address of the user"
+  }
+  */
   function getUserWallet(address userAddress)
   public
   view
@@ -223,6 +255,13 @@ contract KofNMultisig {
     return usersInGroup[userAddress].wallet;
   }
 
+  /**
+  @notice Get user in group
+  @param userAddress The address of the user
+  @return {
+    "inGroup": "True if the user belongs to the group, Flase otherwise"
+  }
+  */
   function getUserInGroup(address userAddress)
   public
   view
@@ -231,6 +270,13 @@ contract KofNMultisig {
     return usersInGroup[userAddress].inGroup;
   }
 
+  /**
+  @notice Get user challenged
+  @param userAddress The address of the user
+  @return {
+    "inGroup": "True if the user is the challnge's target, Flase otherwise"
+  }
+  */
   function getUserChallenged(address userAddress)
   public
   view
@@ -279,6 +325,13 @@ contract KofNMultisig {
     return challenge.startBlock;
   }
 
+  /**
+  @notice Get transaction reciever
+  @param txId The transaction Id
+  @return {
+    "receiver": "The address of the transaction destination"
+  }
+  */
   function getTransactionReceiver(uint txId)
   public
   view
@@ -287,6 +340,13 @@ contract KofNMultisig {
   	return ledger[txId].receiver;
   }
 
+  /**
+  @notice Get transaction amount to transfer
+  @param txId The transaction Id
+  @return {
+    "amountToTransfer": "The requested amount of the transaction"
+  }
+  */
   function getTransactionAmountToTransfer(uint txId)
   public
   view
@@ -295,6 +355,13 @@ contract KofNMultisig {
   	return ledger[txId].amountToTransfer;
   }
 
+  /**
+  @notice Get transaction count
+  @param txId The transaction Id
+  @return {
+    "count": "Number of approvals of the transaction"
+  }
+  */
   function getTransactionCount(uint txId)
   public
   view
@@ -311,6 +378,12 @@ contract KofNMultisig {
   	return ledger[txId].usersApproves[userAddress];
   }
 
+  /**
+  @notice Get penalty wallet
+  @return {
+    "penaltyWallet": "The address of the penalty wallet"
+  }
+  */
   function getPenaltyWallet()
   public
   pure
@@ -319,6 +392,12 @@ contract KofNMultisig {
   	return penaltyWallet;
   }
 
+  /**
+  @notice Get number of transactions
+  @return {
+    "numberOfTransactions": "The number of the requested transactions"
+  }
+  */
   function getNumberOfTransactions()
   public
   view
@@ -327,6 +406,12 @@ contract KofNMultisig {
   	return numberOfTransactions;
   }
 
+  /**
+  @notice Get balance
+  @return {
+    "balance": "The balance of the contract wallet"
+  }
+  */
   function getBalance()
   public
   view
@@ -335,6 +420,12 @@ contract KofNMultisig {
     return address(this).balance;
   }
 
+  /**
+  @notice Get address
+  @return {
+    "address": "The address of the contract"
+  }
+  */
   function getAddress()
   public
   view
