@@ -65,8 +65,8 @@ contract KofNMultisig {
 	  numberOfTransactions = 0;
 	}
 
-	// Create a new challenge and challenge the user with the address target
   function sendChallenge(address target)
+  // Create a new challenge and challenge the user with the address target
 	payable
 	public
 	{
@@ -93,9 +93,9 @@ contract KofNMultisig {
   @return {
   }
   */
-	// Check if the function caller is the challenger’s target, answer the challenge if yes
-	// and take a fee from the contract wallet
 	function respondToChallenge()
+  // Check if the function caller is the challenger’s target, answer the challenge if yes
+	// and take a fee from the contract wallet
 	public
 	{
     require(usersInGroup[msg.sender].inGroup == true,
@@ -113,8 +113,8 @@ contract KofNMultisig {
 
 	}
 
-	// Called to trigger the removal of the user from the group in case times up
 	function tryToRemoveChallengedUser()
+  // Called to trigger the removal of the user from the group in case times up
 	public
 	{
     require(usersInGroup[msg.sender].inGroup == true,
@@ -129,8 +129,8 @@ contract KofNMultisig {
 	  }
 	}
 
-	// Removes the user from group, called only when challenge’s times up
 	function _removeFromGroup(address userWallet)
+  // Removes the user from group, called only when challenge’s times up
 	private
 	{
     assert(K > 0);
@@ -157,8 +157,8 @@ contract KofNMultisig {
   @return {
   }
   */
-	// indicates the consent of msg.sender to transfer “amount” to address “to”
 	function requestPayment(uint amount, address to)
+  // indicates the consent of msg.sender to transfer “amount” to address “to”
 	public
 	{
     require(usersInGroup[msg.sender].inGroup == true,
@@ -173,8 +173,8 @@ contract KofNMultisig {
 
 	}
 
-  // indicates the msg.sender approve for transaction with the id txid
   function approvePayment(uint txId)
+  // indicates the msg.sender approve for transaction with the id txid
   public
   {
     require(usersInGroup[msg.sender].inGroup == true,
@@ -198,8 +198,8 @@ contract KofNMultisig {
     }
   }
 
-  // Initiates the transfer, called only when all K users gave their “permission”
   function _makePayment (uint amount, address to)
+  // Initiates the transfer, called only when all K users gave their “permission”
   private
   {
     to.transfer(amount);
