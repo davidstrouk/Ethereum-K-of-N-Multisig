@@ -27,194 +27,194 @@ contract('Test K-of-N', async (accounts) => {
   const BLOCKS_TO_RESPOND = 20;
   const BLOCKS_TO_BLOCK = 50;
 
-  it("General Test K = N", async () => {
-    var Error;
-    var res;
-    const _k = 5;
-
-    let instance1 = await KofNMultisig.new(users_in_group, _k);
-
-    // transfer ether to the contract
-    web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(10, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
-
-    // chek init values
-    res = await instance1.getN();
-    assert.equal(res, users_in_group.length, "N is invalid");
-    res = await instance1.getK();
-    assert.equal(res, users_in_group.length, "K is invalid");
-
-    // request for payments
-    await instance1.requestPayment(one_ether, accounts[10], {from: users_in_group[3]});
-    await instance1.approvePayment(1, {from: users_in_group[2]});
-    await instance1.approvePayment(1, {from: users_in_group[4]});
-    res = await instance1.getTransactionCount(1);
-    assert.equal(res, 3, "transaction.count is invalid");
-    await instance1.requestPayment(3249012357, accounts[4], {from: users_in_group[0]});
-    await instance1.approvePayment(1, {from: users_in_group[0]});
-    await instance1.approvePayment(2, {from: users_in_group[4]});
-
-    // user 1 didnt approved, send a challenge
-    await waitNBlocks(3);
-    await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[3]});
-    res = await instance1.getTransactionCount(1);
-    assert.equal(res, 4, "transaction.count is invalid");
-    await waitNBlocks(1);
-    try {
-      await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("There is already a published challenge"), -1, "sendChallenge error");
-
-    // user 1 respond and then approve
-    await waitNBlocks(1);
-    var balance = await instance1.getBalance();
-    await instance1.respondToChallenge({from: users_in_group[1]});
-    await instance1.approvePayment(1, {from: users_in_group[1]});
-    await instance1.approvePayment(2, {from: users_in_group[1]});
-    res = await instance1.getChallengeIsActive();
-    assert.equal(res, false, "challenge.isActive is invalid");
-    res = await instance1.getBalance();
-    assert.equal(res.toString(), balance-one_ether-valid_penalty, "contract.balance is invalid");
-    res = await instance1.getTransactionCount(1);
-    assert.equal(res, 5, "transaction.count is invalid");
-    res = await instance1.getTransactionCount(2);
-    assert.equal(res, 3, "transaction.count is invalid");
-
-    // user 3 is blocked from sending a challenge
-    await waitNBlocks(20);
-    try {
-      await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You are blocked from sending a challenge. please wait"), -1, "sendChallenge error");
-
-    // user 3 dont respond to txId=2 and remove from the group
-    await instance1.approvePayment(2, {from: users_in_group[2]});
-    await instance1.sendChallenge(users_in_group[3], {value: valid_penalty, from: users_in_group[4]});
-    await waitNBlocks(BLOCKS_TO_RESPOND);
-    await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
-    try {
-      await instance1.respondToChallenge({from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "sendChallenge error");
-    res = await instance1.getK();
-    assert.equal(res, users_in_group.length-1, "new K is invalid");
-
-    // user 0 send a challenge to himself and respond
-    await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: users_in_group[0]});
-    await waitNBlocks(5);
-    await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
-    res = await instance1.getK();
-    assert.equal(res, users_in_group.length-1, "new K is invalid");
-    await instance1.respondToChallenge({from: users_in_group[0]});
-    res = await instance1.getUserInGroup(users_in_group[0]);
-    assert.equal(res, true, "user.inGroup is invalid");
-
-    // user 1 send a challenge to himself and dont respond
-    await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[1]});
-    await waitNBlocks(BLOCKS_TO_RESPOND);
-    await instance1.tryToRemoveChallengedUser({from: users_in_group[4]});
-    res = await instance1.getUserInGroup(users_in_group[1]);
-    assert.equal(res, false, "user.inGroup is invalid");
-    res = await instance1.getK();
-    assert.equal(res, users_in_group.length-2, "new K is invalid");
-
-    // user 3 try to use the contract
-    try {
-      await instance1.sendChallenge(users_in_group[1], {from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "sendChallenge error");
-    try {
-      await instance1.respondToChallenge({from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "respondToChallenge error");
-    try {
-      await instance1.tryToRemoveChallengedUser({from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "tryToRemoveChallengedUser error");
-
-    try {
-      await instance1.requestPayment(6, users_in_group[3], {from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
-    try {
-      await instance1.approvePayment(2,{from: users_in_group[3]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
-
-    // check data about transaction 2
-    res = await instance1.getTransactionCount(2);
-    assert.equal(res.toString(), 4, "transaction.count is invalid");
-    res = await instance1.getTransactionUsersApprove(2, users_in_group[1]);
-    assert.equal(res, true, "transaction.approve is invalid");
-    res = await instance1.getTransactionUsersApprove(2, users_in_group[3]);
-    assert.equal(res, false, "transaction.approve is invalid");
-
-    // user 2 approve transaction and then get out of the group
-    await waitNBlocks(BLOCKS_TO_BLOCK);
-    await instance1.requestPayment(eight_ether, accounts[8], {from: users_in_group[0]});
-    await instance1.approvePayment(3,{from: users_in_group[2]});
-    await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[0]});
-    await waitNBlocks(BLOCKS_TO_RESPOND);
-    await instance1.tryToRemoveChallengedUser({from: users_in_group[0]});
-    res = await instance1.getUserInGroup(users_in_group[2]);
-    assert.equal(res, false, "user.inGroup is invalid");
-    try {
-    await instance1.approvePayment(4,{from: users_in_group[4]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    // assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
-
-// check with david what happen in this case: 3 people in the group, 1 approve and then get off the group, whst happen when the third user approve???
-// check the balance if transaction should happen or not
-
-
-    // // transaction approve by all users but there is not enough money
-    // var balance = await instance1.getBalance();
-    // await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
-    // try {
-    // await instance1.approvePayment(4,{from: users_in_group[4]});
-    // } catch (error) {
-    //   Error = error;
-    // }
-    // assert.notEqual(Error, undefined, 'Error must be thrown');
-    // assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
-    //
-    // // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
-    // web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
-    // var balance2 = await instance1.getBalance();
-    // console.log('balance: %d',balance2);
-    // await instance1.approvePayment(4, {from: users_in_group[4]});
-    // res = await instance1.getBalance();
-    // console.log('after balance: %d',res);
-    // assert.equal(res, balance2, "approvePayment error");
-
-
-  });
+//   it("General Test K = N", async () => {
+//     var Error;
+//     var res;
+//     const _k = 5;
+//
+//     let instance1 = await KofNMultisig.new(users_in_group, _k);
+//
+//     // transfer ether to the contract
+//     web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(10, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+//
+//     // chek init values
+//     res = await instance1.getN();
+//     assert.equal(res, users_in_group.length, "N is invalid");
+//     res = await instance1.getK();
+//     assert.equal(res, users_in_group.length, "K is invalid");
+//
+//     // request for payments
+//     await instance1.requestPayment(one_ether, accounts[10], {from: users_in_group[3]});
+//     await instance1.approvePayment(1, {from: users_in_group[2]});
+//     await instance1.approvePayment(1, {from: users_in_group[4]});
+//     res = await instance1.getTransactionCount(1);
+//     assert.equal(res, 3, "transaction.count is invalid");
+//     await instance1.requestPayment(3249012357, accounts[4], {from: users_in_group[0]});
+//     await instance1.approvePayment(1, {from: users_in_group[0]});
+//     await instance1.approvePayment(2, {from: users_in_group[4]});
+//
+//     // user 1 didnt approved, send a challenge
+//     await waitNBlocks(3);
+//     await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[3]});
+//     res = await instance1.getTransactionCount(1);
+//     assert.equal(res, 4, "transaction.count is invalid");
+//     await waitNBlocks(1);
+//     try {
+//       await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("There is already a published challenge"), -1, "sendChallenge error");
+//
+//     // user 1 respond and then approve
+//     await waitNBlocks(1);
+//     var balance = await instance1.getBalance();
+//     await instance1.respondToChallenge({from: users_in_group[1]});
+//     await instance1.approvePayment(1, {from: users_in_group[1]});
+//     await instance1.approvePayment(2, {from: users_in_group[1]});
+//     res = await instance1.getChallengeIsActive();
+//     assert.equal(res, false, "challenge.isActive is invalid");
+//     res = await instance1.getBalance();
+//     assert.equal(res.toString(), balance-one_ether-valid_penalty, "contract.balance is invalid");
+//     res = await instance1.getTransactionCount(1);
+//     assert.equal(res, 5, "transaction.count is invalid");
+//     res = await instance1.getTransactionCount(2);
+//     assert.equal(res, 3, "transaction.count is invalid");
+//
+//     // user 3 is blocked from sending a challenge
+//     await waitNBlocks(20);
+//     try {
+//       await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You are blocked from sending a challenge. Please wait"), -1, "sendChallenge error");
+//
+//     // user 3 dont respond to txId=2 and remove from the group
+//     await instance1.approvePayment(2, {from: users_in_group[2]});
+//     await instance1.sendChallenge(users_in_group[3], {value: valid_penalty, from: users_in_group[4]});
+//     await waitNBlocks(BLOCKS_TO_RESPOND);
+//     await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
+//     try {
+//       await instance1.respondToChallenge({from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "sendChallenge error");
+//     res = await instance1.getK();
+//     assert.equal(res, users_in_group.length-1, "new K is invalid");
+//
+//     // user 0 send a challenge to himself and respond
+//     await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: users_in_group[0]});
+//     await waitNBlocks(5);
+//     await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
+//     res = await instance1.getK();
+//     assert.equal(res, users_in_group.length-1, "new K is invalid");
+//     await instance1.respondToChallenge({from: users_in_group[0]});
+//     res = await instance1.getUserInGroup(users_in_group[0]);
+//     assert.equal(res, true, "user.inGroup is invalid");
+//
+//     // user 1 send a challenge to himself and dont respond
+//     await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[1]});
+//     await waitNBlocks(BLOCKS_TO_RESPOND);
+//     await instance1.tryToRemoveChallengedUser({from: users_in_group[4]});
+//     res = await instance1.getUserInGroup(users_in_group[1]);
+//     assert.equal(res, false, "user.inGroup is invalid");
+//     res = await instance1.getK();
+//     assert.equal(res, users_in_group.length-2, "new K is invalid");
+//
+//     // user 3 try to use the contract
+//     try {
+//       await instance1.sendChallenge(users_in_group[1], {from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "sendChallenge error");
+//     try {
+//       await instance1.respondToChallenge({from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "respondToChallenge error");
+//     try {
+//       await instance1.tryToRemoveChallengedUser({from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "tryToRemoveChallengedUser error");
+//
+//     try {
+//       await instance1.requestPayment(6, users_in_group[3], {from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
+//     try {
+//       await instance1.approvePayment(2,{from: users_in_group[3]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
+//
+//     // check data about transaction 2
+//     res = await instance1.getTransactionCount(2);
+//     assert.equal(res.toString(), 4, "transaction.count is invalid");
+//     res = await instance1.getTransactionUsersApprove(2, users_in_group[1]);
+//     assert.equal(res, true, "transaction.approve is invalid");
+//     res = await instance1.getTransactionUsersApprove(2, users_in_group[3]);
+//     assert.equal(res, false, "transaction.approve is invalid");
+//
+//     // user 2 approve transaction and then get out of the group
+//     await waitNBlocks(BLOCKS_TO_BLOCK);
+//     await instance1.requestPayment(eight_ether, accounts[8], {from: users_in_group[0]});
+//     await instance1.approvePayment(3,{from: users_in_group[2]});
+//     await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[0]});
+//     await waitNBlocks(BLOCKS_TO_RESPOND);
+//     await instance1.tryToRemoveChallengedUser({from: users_in_group[0]});
+//     res = await instance1.getUserInGroup(users_in_group[2]);
+//     assert.equal(res, false, "user.inGroup is invalid");
+//     try {
+//     await instance1.approvePayment(4,{from: users_in_group[4]});
+//     } catch (error) {
+//       Error = error;
+//     }
+//     assert.notEqual(Error, undefined, 'Error must be thrown');
+//     // assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
+//
+// // check with david what happen in this case: 3 people in the group, 1 approve and then get off the group, whst happen when the third user approve???
+// // check the balance if transaction should happen or not
+//
+//
+//     // // transaction approve by all users but there is not enough money
+//     // var balance = await instance1.getBalance();
+//     // await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
+//     // try {
+//     // await instance1.approvePayment(4,{from: users_in_group[4]});
+//     // } catch (error) {
+//     //   Error = error;
+//     // }
+//     // assert.notEqual(Error, undefined, 'Error must be thrown');
+//     // assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
+//     //
+//     // // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
+//     // web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+//     // var balance2 = await instance1.getBalance();
+//     // console.log('balance: %d',balance2);
+//     // await instance1.approvePayment(4, {from: users_in_group[4]});
+//     // res = await instance1.getBalance();
+//     // console.log('after balance: %d',res);
+//     // assert.equal(res, balance2, "approvePayment error");
+//
+//
+//   });
 
   it("General Test K < N", async () => {
     var Error;
@@ -309,15 +309,39 @@ contract('Test K-of-N', async (accounts) => {
     assert.equal(res, 3, "K is wrong");
 
     // David is out of group and he tries to request a payment: receives error
-    // try {
-    //   await instance.requestPayment(aaron_address, {from: david_address});
-    // } catch (error) {
-    //   Error = error;
-    // }
-    // assert.notEqual(Error, undefined, 'Error must be thrown');
-    // assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
+    try {
+      await instance.requestPayment(one_ether, aaron_address, {from: david_address});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
 
+    // Ouri sends a challenge to Ness and she answers
+    await instance.sendChallenge(ness_address, {from: ouri_address, value: valid_penalty});
+    await instance.respondToChallenge({from: ness_address});
 
+    // Now Ouri tries to send another challenge: he is blocked
+    try {
+      await instance.sendChallenge(ilana_address, {from: ouri_address, value: valid_penalty});
+    } catch (error) {
+      Error = error;
+    }
+    assert.notEqual(Error, undefined, 'Error must be thrown');
+    assert.isAbove(Error.message.search("You are blocked from sending a challenge. Please wait"), -1, "sendChallenge error");
+
+    await waitNBlocks(BLOCKS_TO_BLOCK);
+
+    // We waited BLOCKS_TO_BLOCK so Ouri can send a challenge now
+    // He is sending to Ness and this time she doesn't answer
+    await instance.sendChallenge(ness_address, {from: ouri_address, value: valid_penalty});
+    await waitNBlocks(BLOCKS_TO_RESPOND);
+    await instance.tryToRemoveChallengedUser({from: ouri_address});
+
+    res = await instance.getN();
+    assert.equal(res, 3, "N is wrong");
+    res = await instance.getK();
+    assert.equal(res, 3, "K is wrong");
   });
 
 });

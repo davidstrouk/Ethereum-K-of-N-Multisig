@@ -80,7 +80,7 @@ contract KofNMultisig {
        "Your target doesnt belong to the group");    //same as: require(getUserIndexByAddress(target) != -1)
 	   require(usersInGroup[msg.sender].lastChallengeBlock == 0
        || block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK,
-       "You are blocked from sending a challenge. please wait");
+       "You are blocked from sending a challenge. Please wait");
 
 	   challenge = Challenge(true, msg.sender, target, block.number);
 	   usersInGroup[msg.sender].lastChallengeBlock = block.number;
