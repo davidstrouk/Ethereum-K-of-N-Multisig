@@ -186,7 +186,7 @@ contract KofNMultisig {
   /**
   @notice Remove user from group
   @dev Private function. The user is removed from group.
-  @param txId
+  @param txId The transaction Id
   @return {
   }
   */
