@@ -308,6 +308,13 @@ contract KofNMultisig {
     return usersInGroup[userAddress].challenged;
   }
 
+  /**
+  @notice Get user last challenge block
+  @param userAddress The address of the user
+  @return {
+    "lastChallengeBlock": "The last block this user published a challenge"
+  }
+  */
   function getUserLastChallengeBlock(address userAddress)
   public
   view
@@ -316,6 +323,12 @@ contract KofNMultisig {
   	return usersInGroup[userAddress].lastChallengeBlock;
   }
 
+  /**
+  @notice Get challenge is active
+  @return {
+    "isActive": "True if there is an active challenge, False otherwise"
+  }
+  */
   function getChallengeIsActive()
   public
   view
@@ -324,6 +337,12 @@ contract KofNMultisig {
   	return challenge.isActive;
   }
 
+  /**
+  @notice Get challenge's sender
+  @return {
+    "sender": "The challenge's sender"
+  }
+  */
   function getChallengeSender()
   public
   view
@@ -332,6 +351,12 @@ contract KofNMultisig {
     return challenge.sender;
   }
 
+  /**
+  @notice Get challenge's target
+  @return {
+    "target": "The target of the challenge"
+  }
+  */
   function getChallengeTarget()
   public
   view
@@ -340,6 +365,12 @@ contract KofNMultisig {
   	return challenge.target;
   }
 
+  /**
+  @notice Get challenge start block
+  @return {
+    "startBlock": "The block that the challenge was published on"
+  }
+  */
   function getChallengeStartBlock()
   public
   view
@@ -393,6 +424,14 @@ contract KofNMultisig {
   	return ledger[txId].count;
   }
 
+  /**
+  @notice Get transaction user approve
+  @param txId The transaction Id
+  @param userAddress The address of the user
+  @return {
+    "userApprove": "True if the user approved txId transaction, False otherwise"
+  }
+  */
   function getTransactionUsersApprove(uint txId, address userAddress)
   public
   view
