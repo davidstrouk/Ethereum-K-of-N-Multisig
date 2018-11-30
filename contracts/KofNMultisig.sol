@@ -4,7 +4,7 @@ pragma solidity ^0.4.24;
 //-------------------------- KofNMultisig Contract --------------------------
 contract KofNMultisig {
 
-  // Conatants
+  // Constants
   uint constant BLOCKS_TO_RESPOND = 20;
   uint constant BLOCKS_TO_BLOCK = 50;
   address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
@@ -18,11 +18,9 @@ contract KofNMultisig {
   }
 
   struct Transaction {
-    /* uint id; */
     address receiver;
     uint amountToTransfer;
     uint count;
-    //bool[] usersApproves;
     mapping (address => bool) usersApproves;
   }
 
@@ -113,6 +111,12 @@ contract KofNMultisig {
 
 	}
 
+  /**
+  @notice Try to remove the challenged user
+  @dev If the challenged user has not answered after a certain amount of blocks (BLOCKS_TO_RESPOND), then he will be removed from group.
+  @return {
+  }
+  */
 	function tryToRemoveChallengedUser()
   // Called to trigger the removal of the user from the group in case times up
 	public
@@ -129,6 +133,12 @@ contract KofNMultisig {
 	  }
 	}
 
+  /**
+  @notice Remove user from group
+  @dev Private function. The user is removed from group.
+  @return {
+  }
+  */
 	function _removeFromGroup(address userWallet)
   // Removes the user from group, called only when challenge’s times up
 	private
@@ -173,6 +183,13 @@ contract KofNMultisig {
 
 	}
 
+  /**
+  @notice Remove user from group
+  @dev Private function. The user is removed from group.
+  @param txId
+  @return {
+  }
+  */
   function approvePayment(uint txId)
   // indicates the msg.sender approve for transaction with the id txid
   public
@@ -198,6 +215,12 @@ contract KofNMultisig {
     }
   }
 
+  /**
+  @notice Make a payment to an address
+  @dev Private function.
+  @return {
+  }
+  */
   function _makePayment (uint amount, address to)
   // Initiates the transfer, called only when all K users gave their “permission”
   private
