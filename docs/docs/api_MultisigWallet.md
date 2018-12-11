@@ -6,7 +6,7 @@ title: MultisigWallet
 <div class="contract-doc">
     <div class="contract"><h2 class="contract-header"><span class="contract-kind">contract</span> MultisigWallet</h2>
         <p class="description">Create new shared wallets.</p>
-        <div class="source"><b>Source:</b> <a href="git+https://github.com/davidstrouk/Ethereum-K-of-N-Multisig/blob/v1.0.0/contracts/MultisigWallet.sol" target="_blank">MultisigWallet.sol</a></div>
+        <div class="source"><b>Source:</b> <a href="https://github.com/davidstrouk/Ethereum-K-of-N-Multisig/blob/master/contracts/MultisigWallet.sol" target="_blank">MultisigWallet.sol</a></div>
         <div class="author"><b>Author:</b> Shoval Loolian, David Strouk</div>
     </div>
     <div class="index"><h2>Index</h2>
