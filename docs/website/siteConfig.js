@@ -24,7 +24,7 @@ const siteConfig = {
   title: 'Ethereum K-of-N Multisig', // Title for your website.
   tagline: 'Ethereum K-of-N Multisig',
   url: 'https://boring-euler-80133b.netlify.com', // Your website URL
-  baseUrl: '/KofN-doc/', // Base URL for your project */
+  baseUrl: '/', // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
   //   baseUrl: '/test-site/',
