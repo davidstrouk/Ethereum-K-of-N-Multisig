@@ -9,4 +9,5 @@ let state = {
  },
  contractInstance: null
 }
+
 export default state
