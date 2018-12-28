@@ -160,7 +160,7 @@ contract KofNMultisig {
   @param amount The requested amount of Wei to transfer
   @param receiver The destination address of the payment
   */
-	function requestPayment(uint amount, address to)
+	function requestPayment(uint amount, address receiver)
   // indicates the consent of msg.sender to transfer “amount” to address “to”
 	public
 	{
@@ -170,7 +170,7 @@ contract KofNMultisig {
       "Please ask for a positive amount");
 
     numberOfTransactions++;
-    ledger[numberOfTransactions] = Transaction(to, amount, 0);
+    ledger[numberOfTransactions] = Transaction(receiver, amount, 0);
     /* ledger[numberOfTransactions].usersApproves[msg.sender] = true; */
     approvePayment(numberOfTransactions);
 
