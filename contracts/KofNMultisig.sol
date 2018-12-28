@@ -14,6 +14,16 @@ contract KofNMultisig {
   address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
   uint constant penalty = 0.1 ether;  // should be total amount/K
 
+  event ChallengeSent(address target);
+  event ChallengeResponded();
+  event UserRemoved(address removed_user, uint K, uint N);
+  event UserNotRemoved(address not_removed_user);
+  event PaymentRequested(uint amount_to_transfer, address receiver, uint txId);
+  event PaymentApproved(uint txId);
+  event PaymentTransferred(uint txId);
+  event PaymentAlreadyApproved(uint txId);
+  event PaymentAlreadyTransferred(uint txId);
+
   struct Challenge {
     bool isActive;
     address sender;
@@ -87,6 +97,8 @@ contract KofNMultisig {
 	   challenge = Challenge(true, msg.sender, target, block.number);
 	   usersInGroup[msg.sender].lastChallengeBlock = block.number;
 	   usersInGroup[target].challenged = true;
+
+     emit ChallengeSent(target);
 	}
 
   /**
@@ -110,6 +122,7 @@ contract KofNMultisig {
     // Punish the whole group by taking the penalty
     penaltyWallet.transfer(penalty);
 
+    emit ChallengeResponded();
 	}
 
   /**
@@ -128,7 +141,9 @@ contract KofNMultisig {
 	  if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
 	    _removeFromGroup(challenge.target);
       challenge.isActive = false;
-	  }
+	  } else {
+      emit UserNotRemoved(challenge.target);
+    }
 	}
 
   /**
@@ -148,6 +163,7 @@ contract KofNMultisig {
       K--;
     }
     usersInGroup[challenge.sender].lastChallengeBlock = 0;
+    emit UserRemoved(userWallet, K, N);
 
     // if there are no more users in the group - transfer the contract balance to penaltyWallet
     if(N == 0) {
@@ -172,6 +188,7 @@ contract KofNMultisig {
     numberOfTransactions++;
     ledger[numberOfTransactions] = Transaction(receiver, amount, 0);
     /* ledger[numberOfTransactions].usersApproves[msg.sender] = true; */
+    emit PaymentRequested(amount, receiver, numberOfTransactions);
     approvePayment(numberOfTransactions);
 
 	}
@@ -194,6 +211,7 @@ contract KofNMultisig {
     {
       transaction.usersApproves[msg.sender] = true;
       transaction.count++;
+      emit PaymentApproved(txId);
       if(transaction.count == K)
       {
         if(challenge.isActive == true) {
@@ -201,7 +219,12 @@ contract KofNMultisig {
             "There is not enough money to make the transfer");
         }
         _makePayment(transaction.amountToTransfer, transaction.receiver);
+        emit PaymentTransferred(txId);
+      } else if(transaction.count > K) {
+        emit PaymentAlreadyTransferred(txId);
       }
+    } else {
+      emit PaymentAlreadyApproved(txId);
     }
   }
 
