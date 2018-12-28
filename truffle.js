@@ -7,7 +7,10 @@ module.exports = {
 			gasPrice: 1,
 			gas: 6600000
 		}
+	},
+	compilers: {
+		solc: {
+			version: "0.4.24",
+		}
 	}
-  // See <http://truffleframework.com/docs/advanced/configuration>
-  // to customize your Truffle configuration!
 };
