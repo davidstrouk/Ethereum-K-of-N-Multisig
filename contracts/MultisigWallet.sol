@@ -1,5 +1,5 @@
 // Version of solidity compiler this program was written for
-pragma solidity ^0.5.0;
+pragma solidity ^0.4.24;
 
 import "./KofNMultisig.sol";
 
@@ -10,28 +10,28 @@ import "./KofNMultisig.sol";
 */
 contract MultisigWallet {
 
-   /* event ContractCreated(address newAddress); */
+    /* event ContractCreated(address newAddress); */
 
-  mapping(address => KofNMultisig) public groups;
+    mapping(address => address) public groups;
 
-  /**
-  @notice Initialize MultisigWallet contract
-  */
-  constructor()
-  public
-  {
-
-  }
-
-  /**
-  @notice Create new shared wallet of type "KofNMultisig" between N users.
-  @param wallets The wallets addresses of the N users
-  @param k The size of required approvals
-  @return The address of the new shared wallet contract
-  */
-  function addGroup(address[] memory wallets, uint k)
+  	/**
+	@notice Initialize MultisigWallet contract
+	*/
+	constructor()
 	public
-	returns (KofNMultisig)
+	{
+
+	}
+
+	/**
+	@notice Create new shared wallet of type "KofNMultisig" between N users.
+	@param wallets The wallets addresses of the N users
+	@param k The size of required approvals
+	@return The address of the new shared wallet contract
+	  */
+    function addGroup(address[] wallets, uint k)
+	public
+	returns (address)
 	{
 	    KofNMultisig newContract = new KofNMultisig(wallets, k);
 	    groups[msg.sender] = newContract;

@@ -1,5 +1,5 @@
 // Version of solidity compiler this program was written for
-pragma solidity ^0.5.0;
+pragma solidity ^0.4.24;
 
 //-------------------------- KofNMultisig Contract --------------------------
   /**
@@ -11,8 +11,7 @@ contract KofNMultisig {
   // Constants
   uint constant BLOCKS_TO_RESPOND = 20;
   uint constant BLOCKS_TO_BLOCK = 50;
-  address payable constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;
-  address constant nullAddress = 0x0000000000000000000000000000000000000000;   // TBD
+  address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
   uint constant penalty = 0.1 ether;  // should be total amount/K
 
   struct Challenge {
@@ -23,7 +22,7 @@ contract KofNMultisig {
   }
 
   struct Transaction {
-    address payable receiver;
+    address receiver;
     uint amountToTransfer;
     uint count;
     mapping (address => bool) usersApproves;
@@ -48,7 +47,7 @@ contract KofNMultisig {
   @param wallets The wallets addresses of the N users
   @param k The size of required approvals
   */
-  constructor(address[] memory wallets, uint k)
+  constructor(address[] wallets, uint k)
   public
   {
     require(wallets.length > 0,
@@ -60,7 +59,7 @@ contract KofNMultisig {
     for(uint i = 0; i < wallets.length ; i++) {
       usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
     }
-	  challenge = Challenge(false, nullAddress, nullAddress, 0);
+	  challenge = Challenge(false, 0, 0, 0);
 	  numberOfTransactions = 0;
 	}
 
@@ -161,8 +160,8 @@ contract KofNMultisig {
   @param amount The requested amount of Wei to transfer
   @param receiver The destination address of the payment
   */
-	function requestPayment(uint amount, address payable receiver)
-  // indicates the consent of msg.sender to transfer “amount” to address "receiver"
+	function requestPayment(uint amount, address to)
+  // indicates the consent of msg.sender to transfer “amount” to address “to”
 	public
 	{
     require(usersInGroup[msg.sender].inGroup == true,
@@ -171,7 +170,8 @@ contract KofNMultisig {
       "Please ask for a positive amount");
 
     numberOfTransactions++;
-    ledger[numberOfTransactions] = Transaction(receiver, amount, 0);
+    ledger[numberOfTransactions] = Transaction(to, amount, 0);
+    /* ledger[numberOfTransactions].usersApproves[msg.sender] = true; */
     approvePayment(numberOfTransactions);
 
 	}
@@ -209,22 +209,28 @@ contract KofNMultisig {
   @notice Make a payment to an address
   @dev Private function.
   */
-  function _makePayment (uint amount, address payable to)
+  function _makePayment (uint amount, address to)
   // Initiates the transfer, called only when all K users gave their “permission”
   private
   {
     to.transfer(amount);
   }
 
-  /**
+ /**
   @notice Send any amount of ether to the shared wallet
   */
   function()
-  external
+  public
   payable
   {}
 
-    //-------------------------- KofNMultisig TEST FUNCTIONS -------------------
+  //-------------------------- KofNMultisig TEST FUNCTIONS -------------------
+  /**
+  @notice Get N
+  @return {
+    "N": "Number of members in the group"
+  }
+  */
   function getN()
   public
   view
