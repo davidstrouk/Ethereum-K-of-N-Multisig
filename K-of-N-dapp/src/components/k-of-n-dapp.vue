@@ -1,8 +1,13 @@
 <template>
- <metamask-data/>
+  <div>
+    <metamask-data/>
+    <KofNMultisig-component/>
+  </div>
 </template>
 <script>
 import MetamaskData from '@/components/metamask-data'
+import KofNMultisigComponent from '@/components/KofNMultisig-component'
+
 export default {
  name: 'k-of-n-dapp',
  beforeCreate () {
@@ -10,7 +15,8 @@ export default {
     this.$store.dispatch('registerWeb3')
   },
  components: {
- 'metamask-data': MetamaskData
+ 'metamask-data': MetamaskData,
+ 'KofNMultisig-component': KofNMultisigComponent
  }
 }
 </script>
