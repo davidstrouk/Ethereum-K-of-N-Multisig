@@ -28,6 +28,7 @@
 <script>
 
   const PENALTY_IN_ETHER = 0.1;
+  const GAS_LIMIT = 3000000;
 
 export default {
  name: 'KofNMultisig',
@@ -69,18 +70,18 @@ export default {
             from: this.$store.state.web3.coinbase
           }, (err, inGroup) => {
             if(inGroup) {
-              this.usersList.push({ value: wallets[i], text: wallets[i]});
+              this.usersList.push({ value: wallets[i], text: wallets[i] });
             }
           });
         }
       });
     },
     sendChallenge (event) {
-      console.log("sendChallenge(", "0xdE9d4F3c10a5242EB8885502a609dfCa33ce5fdF", ") with value ", PENALTY_IN_ETHER);
+      console.log("sendChallenge(", this.selectedTarget, ") with value ", PENALTY_IN_ETHER);
       this.sendChallengeEvent = null;
       this.pending = true;
-      this.$store.state.contractInstance().sendChallenge("0xdE9d4F3c10a5242EB8885502a609dfCa33ce5fdF", {
-        gas: 300000,
+      this.$store.state.contractInstance().sendChallenge(this.selectedTarget, {
+        gas: GAS_LIMIT,
         value: this.$store.state.web3.web3Instance().toWei(PENALTY_IN_ETHER, 'ether'),
         from: this.$store.state.web3.coinbase
       }, (err, result) => {
@@ -106,7 +107,7 @@ export default {
       this.respondToChallengeEvent = null;
       this.pending = true;
       this.$store.state.contractInstance().respondToChallenge({
-        gas: 300000,
+        gas: GAS_LIMIT,
         from: this.$store.state.web3.coinbase
       }, (err, result) => {
         if (err) {
