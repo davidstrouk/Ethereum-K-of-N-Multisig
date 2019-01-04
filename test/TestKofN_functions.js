@@ -94,6 +94,11 @@ contract('Test K-of-N Functions', async (accounts) => {
     res = await instance3.getNumberOfTransactions();
     assert.equal(res, 0, "numberOfTransactionsis invalid");
 
+    res = await instance3.getUsersWallets();
+    assert.equal(res[0], accounts[0], "getUsersWallets[0] is invalid");
+    assert.equal(res[1], accounts[1], "getUsersWallets[1] is invalid");
+    assert.equal(res[2], accounts[2], "getUsersWallets[2] is invalid");
+
   });
 
   it("testSendChallenge", async () => {
@@ -196,7 +201,6 @@ contract('Test K-of-N Functions', async (accounts) => {
 
     res = await instance6.getUserChallenged(users_in_group[1]);
     assert.equal(res, true, "usersInGroup[target].challenged is invalid");
-
 
     ////// WORK IN PROGRESS ///////
     await instance6.respondToChallenge({from: users_in_group[1]});

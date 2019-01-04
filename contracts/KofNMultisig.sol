@@ -47,6 +47,8 @@ contract KofNMultisig {
 
   uint N;
 	uint K;
+
+    address[] usersWallets;
 	mapping (address => User) usersInGroup;
 	Challenge challenge;
 	mapping (uint => Transaction) ledger;
@@ -69,6 +71,7 @@ contract KofNMultisig {
     for(uint i = 0; i < wallets.length ; i++) {
       usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
     }
+      usersWallets = wallets;
 	  challenge = Challenge(false, 0, 0, 0);
 	  numberOfTransactions = 0;
 	}
@@ -274,6 +277,20 @@ contract KofNMultisig {
   returns (uint)
   {
     return K;
+  }
+
+  /**
+  @notice Get users' wallets
+  @return {
+    "usersWallets": "Users' wallets array"
+  }
+  */
+  function getUsersWallets()
+  public
+  view
+  returns (address[])
+  {
+    return usersWallets;
   }
 
   /**
