@@ -1,18 +1,19 @@
 <template>
   <div>
-    <metamask-data/>
-    <KofNMultisig-component/>
+    <h1>K-of-N-Multisig Wallet</h1>
+    <metamask-data></metamask-data>
+    <KofNMultisig-component></KofNMultisig-component>
   </div>
 </template>
 <script>
-import MetamaskData from '@/components/metamask-data'
-import KofNMultisigComponent from '@/components/KofNMultisig-component'
+import MetamaskData from './metamask-data'
+import KofNMultisigComponent from './KofNMultisig-component'
 
 export default {
  name: 'k-of-n-dapp',
  beforeCreate () {
-    console.log('registerWeb3 Action dispatched from k-of-n-dapp.vue')
-    this.$store.dispatch('registerWeb3')
+    console.log('registerWeb3 Action dispatched from k-of-n-dapp.vue');
+    this.$store.dispatch('registerWeb3').then(() => {});
   },
  components: {
  'metamask-data': MetamaskData,
