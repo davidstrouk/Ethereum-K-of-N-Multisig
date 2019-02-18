@@ -1,8 +1,13 @@
 <template>
   <div>
     <h1>K-of-N-Multisig Wallet</h1>
-    <metamask-data></metamask-data>
-    <KofNMultisig-component></KofNMultisig-component>
+    <div v-if="web3.isInjected">
+      <metamask-data></metamask-data>
+      <KofNMultisig-component></KofNMultisig-component>
+    </div>
+    <div v-else>
+      Please connect to your Metamask account.
+    </div>
   </div>
 </template>
 <script>
@@ -12,8 +17,12 @@ import KofNMultisigComponent from './KofNMultisig-component'
 export default {
  name: 'k-of-n-dapp',
  beforeCreate () {
-    console.log('registerWeb3 Action dispatched from k-of-n-dapp.vue');
     this.$store.dispatch('registerWeb3').then(() => {});
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
+    }
   },
  components: {
  'metamask-data': MetamaskData,
