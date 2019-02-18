@@ -21,8 +21,6 @@ contract KofNMultisig {
   event PaymentRequested(uint amount_to_transfer, address receiver, uint txId);
   event PaymentApproved(uint txId);
   event PaymentTransferred(uint txId);
-  event PaymentAlreadyApproved(uint txId);
-  event PaymentAlreadyTransferred(uint txId);
 
   struct Challenge {
     bool isActive;
@@ -217,17 +215,12 @@ contract KofNMultisig {
       emit PaymentApproved(txId);
       if(transaction.count == K)
       {
-        if(challenge.isActive == true) {
-          require(address(this).balance - ledger[txId].amountToTransfer >= penalty,
-            "There is not enough money to make the transfer");
-        }
+        require((challenge.isActive == false && address(this).balance >= ledger[txId].amountToTransfer)
+        || (challenge.isActive == true && address(this).balance >= ledger[txId].amountToTransfer + penalty),
+        "There is not enough money to make the transfer")
         _makePayment(transaction.amountToTransfer, transaction.receiver);
         emit PaymentTransferred(txId);
-      } else if(transaction.count > K) {
-        emit PaymentAlreadyTransferred(txId);
       }
-    } else {
-      emit PaymentAlreadyApproved(txId);
     }
   }
 
