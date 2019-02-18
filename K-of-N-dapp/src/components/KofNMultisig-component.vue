@@ -4,7 +4,7 @@
       <h4>
         Shared Wallet Details:
       </h4>
-      <p>Balance: {{ this.balance }}</p>
+      <p>Balance: {{ fromWeitoEther(this.balance) }}</p>
       <p>N: {{ this.N }}</p>
       <p>K: {{ this.K }}</p>
       <br/>
@@ -46,7 +46,7 @@
           <b-col>
             <b-form-input v-model="requestPaymentAmount"
                           type="number"
-                          placeholder="Amount to send (in wei)"></b-form-input>
+                          placeholder="Amount to send (in ether)"></b-form-input>
           </b-col>
           <b-col>
             <b-button v-on:click="requestPayment">Request Payment</b-button>
@@ -226,7 +226,6 @@
           gas: GAS_LIMIT,
           from: this.$store.state.web3.coinbase
         }, (err, inGroup) => {
-          console.log("inGroup = ", inGroup);
           this.userInGroup = inGroup;
         });
       },
@@ -295,7 +294,7 @@
                 gas: GAS_LIMIT,
                 from: this.$store.state.web3.coinbase
               }, (err, amount_to_transfer) => {
-                transactionRow["amount"] = parseInt(amount_to_transfer);
+                transactionRow["amount"] = this.fromWeitoEther(parseInt(amount_to_transfer));
                 if (err) {
                   reject(err);
                 }
@@ -313,6 +312,9 @@
                 from: this.$store.state.web3.coinbase
               }, (err, count) => {
                 transactionRow["count"] = parseInt(count);
+                if (transactionRow["count"] === this.K) {
+                  transactionRow["_rowVariant"] = "success";
+                }
                 if (err) {
                   reject(err);
                 }
@@ -341,7 +343,6 @@
           }
 
           Promise.all(promises).then(values => {
-            console.log("Row ", i, " is ready");
             this.transactionsTable.push(transactionRow);
           });
         }
@@ -359,7 +360,6 @@
           gas: GAS_LIMIT,
           from: this.$store.state.web3.coinbase
         }, (err, lastChallengeBlock) => {
-          console.log("inGroup = ", lastChallengeBlock);
           this.lastChallengeBlock = lastChallengeBlock;
         });
       },
@@ -400,7 +400,6 @@
       },
 
       sendChallenge(event) {
-        console.log("sendChallenge(", this.selectedTarget, ") with value ", PENALTY_IN_ETHER);
         this.sendChallengeEvent = null;
         this.pending = true;
         this.$store.state.contractInstance().sendChallenge(this.selectedTarget, {
@@ -532,7 +531,7 @@
         this.paymentTransferredEvent = null;
 
         this.pending = true;
-        this.$store.state.contractInstance().requestPayment(this.requestPaymentAmount, this.requestPaymentReceiver, {
+        this.$store.state.contractInstance().requestPayment(this.$store.state.web3.web3Instance().toWei(this.requestPaymentAmount, "ether"), this.requestPaymentReceiver, {
           gas: GAS_LIMIT,
           from: this.$store.state.web3.coinbase
         }, (err, result) => {
@@ -635,6 +634,9 @@
             });
           }
         })
+      },
+      fromWeitoEther(wei) {
+        return this.$store.state.web3.web3Instance().fromWei(wei, 'ether');
       }
     }
   }

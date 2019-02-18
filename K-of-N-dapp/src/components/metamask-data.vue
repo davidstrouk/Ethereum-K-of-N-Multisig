@@ -7,7 +7,7 @@
     </div>
     <div class="metamask-info">
       <p>Account: {{ web3.coinbase }}</p>
-      <p>Balance: {{ web3.balance }}</p>
+      <p>Balance: {{ fromWeitoEther(web3.balance) }}</p>
     </div>
   </div>
 </template>
@@ -19,9 +19,11 @@
         return this.$store.state.web3;
       }
     },
-    // mounted() {
-    //   console.log(web3().isInjected);
-    // }
+    methods: {
+      fromWeitoEther(wei) {
+        return this.$store.state.web3.web3Instance().fromWei(wei, 'ether');
+      }
+    }
   }
 </script>
 <style scoped>
