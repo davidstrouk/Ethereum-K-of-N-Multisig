@@ -11,6 +11,9 @@
       <div v-if="challengeIsActive">
         There is an active challenge.
       </div>
+      <div v-else>
+        There is NO active challenge.
+      </div>
       <div v-if="userInGroup">
         <b-row>
           <b-col>
@@ -29,7 +32,8 @@
         </b-row>
         <b-row>
           <b-col>
-            <b-button v-if="challengeIsActive" v-on:click="tryToRemoveChallengedUser">Try to remove challenged user</b-button>
+            <b-button v-if="challengeIsActive" v-on:click="tryToRemoveChallengedUser">Try to remove challenged user
+            </b-button>
             <b-button v-else disabled>Try to remove challenged user</b-button>
           </b-col>
         </b-row>
@@ -49,7 +53,22 @@
           </b-col>
         </b-row>
         <b-row>
-          <b-table striped hover :items="transactionsList"></b-table>
+          <b-col>
+            <b-form-select :options="transactionsList" v-model="approvePaymentTxId"></b-form-select>
+          </b-col>
+          <b-col>
+            <b-button v-if="transactionsList.length > 0" v-on:click="approvePayment">Approve Payment</b-button>
+            <b-button v-else disabled>Approve Payment</b-button>
+          </b-col>
+        </b-row>
+        <b-row>
+          <b-col>
+            <b-table ref="table" striped hover
+                     :sort-by="transactionsTableSortBy"
+                     :sort-desc="transactionsTableSortDesc"
+                     :fields="fields"
+                     :items="transactionsTable"></b-table>
+          </b-col>
         </b-row>
       </div>
       <div class="error" v-else>
@@ -120,21 +139,43 @@
         sendChallengeFailed: false,
         respondToChallengeFailed: false,
         tryToRemoveChallengedUserFailed: false,
+        requestPaymentFailed: false,
+        approvePaymentFailed: false,
 
         selectedTarget: null,
         requestPaymentReceiver: null,
         requestPaymentAmount: null,
 
+        approvePaymentTxId: null,
+
         activeUsersList: [
           {value: null, text: 'Please select a user'},
         ],
-        transactionsList: [],
+        fields: [],
+        transactionsTable: [],
+        transactionsTableSortBy: "ID",
+        transactionsTableSortDesc: false,
 
         usersList: [],
+        transactionsList: [],
         userInGroup: true,
         numberOfTransactions: null,
         lastChallengeBlock: 0,
         pending: false
+      }
+    },
+    watch: {
+      numberOfTransactions: function () {
+        this.updateUsersList();
+      },
+      usersList: function () {
+        this.updateTransactionsTable();
+      },
+      transactionsTable: function () {
+        this.$refs.table.refresh();
+      },
+      balance: function () {
+        this.updateTransactionsList();
       }
     },
     mounted() {
@@ -153,11 +194,7 @@
         this.updateK();
         this.updateSharedWalletBalance();
         this.updateNumberOfTransactions();
-        this.updateUsersList();
         this.updateChallengeIsActive();
-        // this.updateTransactionsList();
-        // this.updateLastChallengeBlock();
-        // this.updateUserInGroup();
       },
 
       updateN() {
@@ -194,45 +231,120 @@
         });
       },
       updateTransactionsList() {
-        console.log("enter updateTransactionsList");
-        console.log("numberOfTransactions=", this.numberOfTransactions);
-
-        for(let i = 0; i < this.numberOfTransactions; i++) {
-          this.transactionsList[i] = {};
-
-          this.$store.state.contractInstance().getTransactionReceiver(i, {
-            gas: GAS_LIMIT,
-            from: this.$store.state.web3.coinbase
-          }, (err, receiver) => {
-            this.transactionsList[i]['address'] = receiver;
-          });
-
-          this.$store.state.contractInstance().getTransactionAmountToTransfer(i, {
-            gas: GAS_LIMIT,
-            from: this.$store.state.web3.coinbase
-          }, (err, amount_to_transfer) => {
-            this.transactionsList[i]['amount'] = parseInt(amount_to_transfer);
-          });
-
-          this.$store.state.contractInstance().getTransactionCount(i, {
-            gas: GAS_LIMIT,
-            from: this.$store.state.web3.coinbase
-          }, (err, count) => {
-            this.transactionsList[i]['count'] = parseInt(count);
-          });
-
-          for(let j = 0; j < this.usersList.length; j++) {
-            this.$store.state.contractInstance().getTransactionUsersApprove(i, this.usersList[j], {
+        this.$store.state.contractInstance().getNumberOfTransactions({
+          gas: GAS_LIMIT,
+          from: this.$store.state.web3.coinbase
+        }, (err, number_of_transactions) => {
+          let numberOfTransactions = parseInt(number_of_transactions);
+          for (let i = 1; i <= numberOfTransactions; i++) {
+            this.$store.state.contractInstance().getTransactionCount(i, {
               gas: GAS_LIMIT,
               from: this.$store.state.web3.coinbase
-            }, (err, approved) => {
-              this.transactionsList[i]['user_' + j] = approved;
+            }, (err, count) => {
+              let transactionCount = parseInt(count);
+              this.$store.state.contractInstance().getTransactionAmountToTransfer(i, {
+                gas: GAS_LIMIT,
+                from: this.$store.state.web3.coinbase
+              }, (err, amount_to_transfer) => {
+                if (((!this.challengeIsActive && this.balance >= parseInt(amount_to_transfer))
+                  || (this.challengeIsActive && this.balance >= parseInt(amount_to_transfer) + this.$store.state.web3.web3Instance().toWei(PENALTY_IN_ETHER, 'ether')))
+                  && (transactionCount < this.K)) {
+                  this.transactionsList.push(i);
+                }
+              });
             });
           }
+        });
+      },
+      updateTransactionsTable() {
+        this.fields = [];
+        this.fields.push("ID");
+        this.fields.push("address");
+        this.fields.push("amount");
+        this.fields.push("count");
 
-          this.transactionsList.sort();
+        for (let i = 1; i <= this.usersList.length; i++) {
+          this.fields.push("user_" + i);
         }
-        console.log("this.transactionsList =", this.transactionsList);
+
+        this.transactionsTable = [];
+        for (let i = 1; i <= this.numberOfTransactions; i++) {
+          let promises = [];
+          let transactionRow = {"ID": i};
+
+          promises.push(
+            new Promise((resolve, reject) => {
+              this.$store.state.contractInstance().getTransactionReceiver(i, {
+                gas: GAS_LIMIT,
+                from: this.$store.state.web3.coinbase
+              }, (err, receiver) => {
+                transactionRow["address"] = receiver;
+                if (err) {
+                  reject(err);
+                }
+                if (receiver) {
+                  resolve(receiver);
+                }
+              })
+            })
+          );
+
+          promises.push(
+            new Promise((resolve, reject) => {
+              this.$store.state.contractInstance().getTransactionAmountToTransfer(i, {
+                gas: GAS_LIMIT,
+                from: this.$store.state.web3.coinbase
+              }, (err, amount_to_transfer) => {
+                transactionRow["amount"] = parseInt(amount_to_transfer);
+                if (err) {
+                  reject(err);
+                }
+                if (amount_to_transfer) {
+                  resolve(amount_to_transfer);
+                }
+              })
+            })
+          );
+
+          promises.push(
+            new Promise((resolve, reject) => {
+              this.$store.state.contractInstance().getTransactionCount(i, {
+                gas: GAS_LIMIT,
+                from: this.$store.state.web3.coinbase
+              }, (err, count) => {
+                transactionRow["count"] = parseInt(count);
+                if (err) {
+                  reject(err);
+                }
+                if (count) {
+                  resolve(count);
+                }
+              })
+            })
+          );
+
+          for (let j = 1; j <= this.usersList.length; j++) {
+            promises.push(
+              new Promise((resolve, reject) => {
+                this.$store.state.contractInstance().getTransactionUsersApprove(i, this.usersList[j - 1], {
+                  gas: GAS_LIMIT,
+                  from: this.$store.state.web3.coinbase
+                }, (err, approved) => {
+                  transactionRow['user_' + j] = approved ? "V" : "X";
+                  if (err) {
+                    reject(err);
+                  }
+                  resolve(approved);
+                })
+              })
+            );
+          }
+
+          Promise.all(promises).then(values => {
+            console.log("Row ", i, " is ready");
+            this.transactionsTable.push(transactionRow);
+          });
+        }
       },
       updateChallengeIsActive() {
         this.$store.state.contractInstance().getChallengeIsActive({
@@ -257,7 +369,6 @@
           from: this.$store.state.web3.coinbase
         }, (err, number_of_transactions) => {
           this.numberOfTransactions = parseInt(number_of_transactions);
-          this.updateTransactionsList();
         });
       },
 
@@ -437,12 +548,7 @@
                 console.log("PaymentRequested event has been received");
                 this.paymentRequestedEvent = result.args;
                 this.updateNumberOfTransactions();
-                this.transactionsList.push(
-                  {
-                    txId: this.paymentRequestedEvent.txId,
-                    address: this.paymentRequestedEvent.receiver,
-                    amount: this.paymentRequestedEvent.amount_to_transfer
-                  });
+                this.updateTransactionsList();
                 this.pending = false;
               }
             });
@@ -471,7 +577,7 @@
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               if (data.status == '0x0') {
-                this.tryToRemoveChallengedUserFailed = true;
+                this.requestPaymentFailed = true;
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
@@ -482,7 +588,53 @@
         })
       },
       approvePayment(event) {
+        this.paymentApprovedEvent = null;
+        this.paymentTransferredEvent = null;
 
+        this.pending = true;
+        this.$store.state.contractInstance().approvePayment(this.approvePaymentTxId, {
+          gas: GAS_LIMIT,
+          from: this.$store.state.web3.coinbase
+        }, (err, result) => {
+          if (err) {
+            console.log(err);
+            this.pending = false
+          } else {
+            let PaymentApproved = this.$store.state.contractInstance().PaymentApproved();
+            PaymentApproved.watch((err, result) => {
+              if (err) {
+                console.log('could not get event PaymentApproved()')
+              } else {
+                console.log("PaymentApproved event has been received");
+                this.paymentApprovedEvent = result.args;
+                this.updateTransactionsList();
+                this.updateTransactionsTable();
+                this.pending = false
+              }
+            });
+
+            let PaymentTransferred = this.$store.state.contractInstance().PaymentTransferred();
+            PaymentTransferred.watch((err, result) => {
+              if (err) {
+                console.log('could not get event PaymentTransferred()')
+              } else {
+                console.log("PaymentTransferred event has been received");
+                this.paymentTransferredEvent = result.args;
+                this.pending = false
+              }
+            });
+
+            getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
+              if (data.status == '0x0') {
+                this.approvePaymentFailed = true;
+                this.pending = false;
+                console.log("The contract execution was not successful, check your transaction !");
+              } else {
+                console.log("Execution was successful");
+              }
+            });
+          }
+        })
       }
     }
   }
