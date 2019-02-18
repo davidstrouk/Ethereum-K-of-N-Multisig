@@ -11,12 +11,12 @@ import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 Vue.use(BootstrapVue);
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 /* eslint-disable no-new */
 new Vue({
  el: '#app',
  router,
  store,
  components: { App },
- template: '<App/>'
-})
+ template: '<App/>',
+});

@@ -1,4 +1,4 @@
-const address = '0x729a071ca42d3f93c05f4a949bd39df903f49cf9';
+const address = "0x68314fa4c302fd3aac6ad94bd936431a72d2cd58";
 const ABI = [
   {
     "constant": false,
@@ -180,6 +180,18 @@ const ABI = [
       }
     ],
     "name": "PaymentTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "minimum_balance",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientBalance",
     "type": "event"
   },
   {
