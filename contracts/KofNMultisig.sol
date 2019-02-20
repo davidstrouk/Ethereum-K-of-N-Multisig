@@ -9,10 +9,9 @@ pragma solidity ^0.4.24;
 contract KofNMultisig {
 
   // Constants
-  uint constant BLOCKS_TO_RESPOND = 20;
-  uint constant BLOCKS_TO_BLOCK = 50;
+  uint constant BLOCKS_TO_RESPOND = 10;
+  uint constant BLOCKS_TO_BLOCK = 20;
   address constant penaltyWallet = 0x56C509F889a8B6950a77d0E4D8a252D2a805A74d;   // TBD
-  uint constant penalty = 0.1 ether;  // should be total amount/K
 
   event ChallengeSent(address target);
   event ChallengeResponded();
@@ -46,18 +45,20 @@ contract KofNMultisig {
   uint N;
 	uint K;
 
-    address[] usersWallets;
+  address[] usersWallets;
 	mapping (address => User) usersInGroup;
 	Challenge challenge;
 	mapping (uint => Transaction) ledger;
 	uint numberOfTransactions;
 
+  uint penalty;  // should be total amount/N
+
   /**
   @notice Initialize KofNMultisig contract with N wallets and K approvals
   @param wallets The wallets addresses of the N users
-  @param k The size of required approvals
+  @param K The size of required approvals
   */
-  constructor(address[] wallets, uint k)
+  constructor(address[] wallets, uint K)
   public
   {
     require(wallets.length > 0,
@@ -69,9 +70,10 @@ contract KofNMultisig {
     for(uint i = 0; i < wallets.length ; i++) {
       usersInGroup[wallets[i]] = User(wallets[i], true, false, 0);
     }
-      usersWallets = wallets;
+    usersWallets = wallets;
 	  challenge = Challenge(false, 0, 0, 0);
 	  numberOfTransactions = 0;
+    penalty = 0;
 	}
 
   /**
@@ -160,6 +162,7 @@ contract KofNMultisig {
     // remove the challenge target from group and remove the sender block
     usersInGroup[userWallet].inGroup = false;
     N--;
+    penalty = address(this).balance/N;
     if(K > N) {
       K--;
     }
@@ -217,7 +220,7 @@ contract KofNMultisig {
       {
         require((challenge.isActive == false && address(this).balance >= ledger[txId].amountToTransfer)
         || (challenge.isActive == true && address(this).balance >= ledger[txId].amountToTransfer + penalty),
-        "There is not enough money to make the transfer")
+        "There is not enough money to make the transfer");
         _makePayment(transaction.amountToTransfer, transaction.receiver);
         emit PaymentTransferred(txId);
       }
@@ -233,6 +236,7 @@ contract KofNMultisig {
   private
   {
     to.transfer(amount);
+    penalty = address(this).balance/N;
   }
 
  /**
@@ -241,7 +245,9 @@ contract KofNMultisig {
   function()
   public
   payable
-  {}
+  {
+    penalty = address(this).balance/N;
+  }
 
   //-------------------------- KofNMultisig TEST FUNCTIONS -------------------
   /**
@@ -519,4 +525,11 @@ contract KofNMultisig {
     return address(this);
   }
 
+  function getPenalty()
+  public
+  view
+  returns (uint)
+  {
+    return penalty;
+  }
 }

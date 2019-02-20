@@ -10,7 +10,7 @@ import "./KofNMultisig.sol";
 */
 contract MultisigWallet {
 
-    /* event ContractCreated(address newAddress); */
+    event ContractCreated(address newAddress);
 
     mapping(address => address) public groups;
 
@@ -26,15 +26,16 @@ contract MultisigWallet {
 	/**
 	@notice Create new shared wallet of type "KofNMultisig" between N users.
 	@param wallets The wallets addresses of the N users
-	@param k The size of required approvals
+	@param K The size of required approvals
 	@return The address of the new shared wallet contract
 	  */
-    function addGroup(address[] wallets, uint k)
+  function addGroup(address[] wallets, uint K)
 	public
 	returns (address)
 	{
-	    KofNMultisig newContract = new KofNMultisig(wallets, k);
+	    KofNMultisig newContract = new KofNMultisig(wallets, K);
 	    groups[msg.sender] = newContract;
+	    emit ContractCreated(newContract);
 	    return newContract;
 	}
 
