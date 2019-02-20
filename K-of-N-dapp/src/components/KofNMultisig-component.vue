@@ -75,38 +75,6 @@
         You don't belong to the group
       </div>
       <img v-if="pending" id="loader" src="https://loading.io/spinners/double-ring/lg.double-ring-spinner.gif">
-      <div class="event" v-if="sendChallengeEvent">
-        Challenge has been sent to target {{ sendChallengeEvent.target }}
-      </div>
-      <div class="event" v-if="respondToChallengeEvent">
-        Challenge has been responded
-      </div>
-      <div class="event" v-if="userRemovedEvent">
-        User {{ userRemovedEvent.removed_user }} has been removed from group. N = {{ userRemovedEvent.N }}, K = {{
-        userRemovedEvent.K }}
-      </div>
-      <div class="event" v-if="userNotRemovedEvent">
-        User {{ userNotRemovedEvent.not_removed_user }} has not been removed from group since time has not passed.
-      </div>
-      <div class="event" v-if="paymentRequestedEvent">
-        Payment to {{paymentRequestedEvent.receiver}} of amount {{paymentRequestedEvent.amount}} has been requested.
-        Transaction id: {{paymentRequestedEvent.txId}}
-      </div>
-      <div class="event" v-if="paymentApprovedEvent">
-        Transaction number {{ paymentApprovedEvent.txId }} has been approved.
-      </div>
-      <div class="event" v-if="paymentTransferredEvent">
-        Transaction number {{ paymentTransferredEvent.txId }} has been transferred.
-      </div>
-      <div class="event" v-if="sendChallengeFailed">
-        Error: Challenge has not been sent.
-      </div>
-      <div class="event" v-if="respondToChallengeFailed">
-        Error: Challenge has not been responded.
-      </div>
-      <div class="event" v-if="tryToRemoveChallengedUserFailed">
-        Error: User has not been removed.
-      </div>
     </div>
   </div>
 </template>
@@ -135,12 +103,6 @@
         paymentRequestedEvent: null,
         paymentApprovedEvent: null,
         paymentTransferredEvent: null,
-
-        sendChallengeFailed: false,
-        respondToChallengeFailed: false,
-        tryToRemoveChallengedUserFailed: false,
-        requestPaymentFailed: false,
-        approvePaymentFailed: false,
 
         selectedTarget: null,
         requestPaymentReceiver: null,
@@ -185,7 +147,8 @@
     },
     computed: {
       userIsBlockedFromSendingChallenge() {
-        return this.lastChallengeBlock !== 0 && this.$store.state.web3.eth.blockNumber - this.lastChallengeBlock < BLOCKS_TO_BLOCK;
+        // TODO: check if it is working
+        return this.lastChallengeBlock !== 0 && this.$store.state.web3.web3Instance().eth.blockNumber - this.lastChallengeBlock < BLOCKS_TO_BLOCK;
       }
     },
     methods: {
@@ -417,17 +380,32 @@
               if (err) {
                 console.log("could not get event ChallengeSent()");
               } else {
-                console.log("ChallengeSent event has been received");
-                this.sendChallengeEvent = result.args;
-                this.pending = false
+                if (this.sendChallengeEvent === null) {
+                  this.sendChallengeEvent = result.args;
+                  this.pending = false;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Challenge Sent',
+                    text: this.getSendChallengeEventMessage(this.sendChallengeEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                }
               }
             });
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               console.log("data= ", data);
               if (data.status == '0x0') {
-
-                this.sendChallengeFailed = true;
+                this.$notify({
+                  group: 'KofNMultisig',
+                  title: 'Error',
+                  text: "Challenge has not been sent.",
+                  type: "error",
+                  duration: 10000,
+                  width: "500"
+                });
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
@@ -456,17 +434,32 @@
               if (err) {
                 console.log('could not get event ChallengeResponded()')
               } else {
-                console.log("ChallengeResponded event has been received");
-                this.respondToChallengeEvent = result.args;
-                this.pending = false
+                if (this.respondToChallengeEvent === null) {
+                  this.respondToChallengeEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Challenge Responded',
+                    text: this.getRespondToChallengeEventMessage(this.respondToChallengeEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false
+                }
               }
             });
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               if (data.status == '0x0') {
-                this.respondToChallengeFailed = true;
+                this.$notify({
+                  group: 'KofNMultisig',
+                  title: 'Error',
+                  text: "Challenge has not been responded.",
+                  type: "error",
+                  duration: 10000,
+                  width: "500"
+                });
                 this.pending = false;
-                console.log("The contract execution was not successful, check your transaction !");
               } else {
                 this.updateChallengeIsActive();
                 console.log("Execution was successful");
@@ -493,10 +486,19 @@
               if (err) {
                 console.log('could not get event UserRemoved()')
               } else {
-                console.log("UserRemoved event has been received");
-                this.userRemovedEvent = result.args;
-                this.pending = false;
-                this.updateActiveUsersList();
+                if (this.userRemovedEvent === null) {
+                  this.userRemovedEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'User Removed',
+                    text: this.getUserRemovedEventMessage(this.userRemovedEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false;
+                  this.updateActiveUsersList();
+                }
               }
             });
 
@@ -505,15 +507,31 @@
               if (err) {
                 console.log('could not get event UserNotRemoved()')
               } else {
-                console.log("UserNotRemoved event has been received");
-                this.userNotRemovedEvent = result.args;
-                this.pending = false
+                if (this.userNotRemovedEvent === null) {
+                  this.userNotRemovedEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'User Not Removed',
+                    text: this.getUserNotRemovedEventMessage(this.userNotRemovedEvent),
+                    type: "warn",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false
+                }
               }
             });
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               if (data.status == '0x0') {
-                this.tryToRemoveChallengedUserFailed = true;
+                this.$notify({
+                  group: 'KofNMultisig',
+                  title: 'Error',
+                  text: "User has not been removed.",
+                  type: "error",
+                  duration: 10000,
+                  width: "500"
+                });
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
@@ -544,11 +562,20 @@
               if (err) {
                 console.log('could not get event PaymentRequested()')
               } else {
-                console.log("PaymentRequested event has been received");
-                this.paymentRequestedEvent = result.args;
-                this.updateNumberOfTransactions();
-                this.updateTransactionsList();
-                this.pending = false;
+                if (this.paymentRequestedEvent === null) {
+                  this.paymentRequestedEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Payment Requested',
+                    text: this.getPaymentRequestedEventMessage(this.paymentRequestedEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.updateNumberOfTransactions();
+                  this.updateTransactionsList();
+                  this.pending = false;
+                }
               }
             });
 
@@ -557,9 +584,18 @@
               if (err) {
                 console.log('could not get event PaymentApproved()')
               } else {
-                console.log("PaymentApproved event has been received");
-                this.paymentApprovedEvent = result.args;
-                this.pending = false
+                if (this.paymentApprovedEvent === null) {
+                  this.paymentApprovedEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Payment Approved',
+                    text: this.getPaymentApprovedEventMessage(this.paymentApprovedEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false
+                }
               }
             });
 
@@ -568,15 +604,31 @@
               if (err) {
                 console.log('could not get event PaymentTransferred()')
               } else {
-                console.log("PaymentTransferred event has been received");
-                this.paymentTransferredEvent = result.args;
-                this.pending = false
+                if (this.paymentTransferredEvent === null) {
+                  this.paymentTransferredEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Payment Transferred',
+                    text: this.getPaymentTransferredEventMessage(this.paymentTransferredEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false;
+                }
               }
             });
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               if (data.status == '0x0') {
-                this.requestPaymentFailed = true;
+                this.$notify({
+                  group: 'KofNMultisig',
+                  title: 'Error',
+                  text: "Payment has not been requested.",
+                  type: "error",
+                  duration: 10000,
+                  width: "500"
+                });
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
@@ -604,11 +656,20 @@
               if (err) {
                 console.log('could not get event PaymentApproved()')
               } else {
-                console.log("PaymentApproved event has been received");
-                this.paymentApprovedEvent = result.args;
-                this.updateTransactionsList();
-                this.updateTransactionsTable();
-                this.pending = false
+                if (this.paymentApprovedEvent === null) {
+                  this.paymentApprovedEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Payment Approved',
+                    text: this.getPaymentApprovedEventMessage(this.paymentApprovedEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.updateTransactionsList();
+                  this.updateTransactionsTable();
+                  this.pending = false;
+                }
               }
             });
 
@@ -617,15 +678,31 @@
               if (err) {
                 console.log('could not get event PaymentTransferred()')
               } else {
-                console.log("PaymentTransferred event has been received");
-                this.paymentTransferredEvent = result.args;
-                this.pending = false
+                if (this.paymentTransferredEvent === null) {
+                  this.paymentTransferredEvent = result.args;
+                  this.$notify({
+                    group: 'KofNMultisig',
+                    title: 'Payment Transferred',
+                    text: this.getPaymentTransferredEventMessage(this.paymentTransferredEvent),
+                    type: "success",
+                    duration: 10000,
+                    width: "500"
+                  });
+                  this.pending = false;
+                }
               }
             });
 
             getTransactionReceiptMined(this.$store.state.web3.web3Instance().eth, result).then(data => {
               if (data.status == '0x0') {
-                this.approvePaymentFailed = true;
+                this.$notify({
+                  group: 'KofNMultisig',
+                  title: 'Error',
+                  text: "Payment has not been approved.",
+                  type: "error",
+                  duration: 10000,
+                  width: "500"
+                });
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
@@ -637,6 +714,28 @@
       },
       fromWeitoEther(wei) {
         return this.$store.state.web3.web3Instance().fromWei(wei, 'ether');
+      },
+      getSendChallengeEventMessage(sendChallengeEvent) {
+        return `Challenge has been sent to target ${sendChallengeEvent.target}`;
+      },
+      getPaymentRequestedEventMessage(paymentRequestedEvent) {
+        return `Payment to ${paymentRequestedEvent.receiver} of amount ${this.fromWeitoEther(paymentRequestedEvent.amount_to_transfer)} has been requested.\n
+          Transaction id: ${paymentRequestedEvent.txId}`;
+      },
+      getRespondToChallengeEventMessage(challengeRespondedEvent) {
+        return `Challenge has been responded`;
+      },
+      getUserRemovedEventMessage(userRemovedEvent) {
+        return `User ${userRemovedEvent.removed_user} has been removed from group. N = ${userRemovedEvent.N}, K = ${userRemovedEvent.K}`
+      },
+      getUserNotRemovedEventMessage(userNotRemovedEvent) {
+        return `User ${userNotRemovedEvent.not_removed_user} has not been removed from group since time has not passed.`;
+      },
+      getPaymentApprovedEventMessage(paymentApprovedEvent) {
+        return `Transaction number ${paymentApprovedEvent.txId} has been approved.`;
+      },
+      getPaymentTransferredEventMessage(paymentTransferredEvent) {
+        return `Transaction number ${paymentTransferredEvent.txId} has been transferred.`;
       }
     }
   }
