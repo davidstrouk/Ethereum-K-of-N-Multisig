@@ -7,8 +7,8 @@
             Shared Wallet Details:
           </h4>
           <p>Contract address: {{ getContractAddress() }}</p>
-          <p>Balance: {{ fromWeitoEther(this.balance) }} ether</p>
-          <p>Members in the group: {{ this.N }}</p>
+          <p>Balance: {{ fromWeitoEther(balance) }} ether</p>
+          <p>Members in the group: {{ N }}</p>
         </b-col>
         <b-col cols="4">
           <img v-if="pending" id="loader" src="../assets/loading.svg">
@@ -16,7 +16,7 @@
       </b-row>
       <br>
       <div v-if="userInGroup">
-        <p>To make a transfer, you need approval of {{ this.K }} members out of {{ this.N }}.</p>
+        <p>To make a transfer, you need approval of {{ K }} members out of {{ N }}.</p>
         <br/>
         <div v-show="challengeIsActive" style="color: red;">
           There is an active challenge right now.
@@ -48,7 +48,7 @@
           <b-col>
             <b>
               <u>Notice:</u>
-              when sending a challenge, you will have to pay a fee of 0.1 ether
+              when sending a challenge, you will have to pay a fee of {{ fromWeitoEther(penalty) }} ether
             </b>
           </b-col>
         </b-row>
@@ -123,9 +123,8 @@
   import {address} from "../util/constants/KofNMultisig";
   import * as _ from "underscore";
 
-  const BLOCKS_TO_BLOCK = 50;
-  const BLOCKS_TO_RESPOND = 20;
-  const PENALTY_IN_ETHER = 0.1;
+  const BLOCKS_TO_BLOCK = 20;
+  const BLOCKS_TO_RESPOND = 10;
   const GAS_LIMIT = 3000000;
 
   export default {
@@ -137,6 +136,7 @@
         K: null,
         coinbase: null,
         currentBlockNumber: null,
+        penalty: 0,
 
         challengeIsActive: false,
         challengeStartBlock: 0,
@@ -188,8 +188,7 @@
       }
     },
     mounted() {
-      this.$store.dispatch('getContractInstance').then(() => {
-      });
+      this.$store.dispatch('getContractInstance').then(() => {});
 
       let accountInterval = setInterval(function () {
         if (this.web3.coinbase !== this.coinbase) {
@@ -226,6 +225,7 @@
         this.updateChallengeStartBlock();
         this.updateUserInGroup();
         this.updateUsersList();
+        this.updatePenalty();
       },
 
       updateN() {
@@ -242,6 +242,14 @@
           from: this.$store.state.web3.coinbase
         }, (err, K) => {
           this.K = parseInt(K);
+        });
+      },
+      updatePenalty() {
+        this.$store.state.contractInstance().getPenalty({
+          gas: GAS_LIMIT,
+          from: this.$store.state.web3.coinbase
+        }, (err, penalty) => {
+          this.penalty = parseInt(penalty);
         });
       },
       updateSharedWalletBalance() {
@@ -277,7 +285,7 @@
                 from: this.$store.state.web3.coinbase
               }, (err, amount_to_transfer) => {
                 if (((!this.challengeIsActive && this.balance >= parseInt(amount_to_transfer))
-                  || (this.challengeIsActive && this.balance >= parseInt(amount_to_transfer) + this.$store.state.web3.web3Instance().toWei(PENALTY_IN_ETHER, 'ether')))
+                  || (this.challengeIsActive && this.balance >= parseInt(amount_to_transfer) + this.penalty))
                   && (transactionCount < this.K)) {
                   this.transactionsList.push(i);
                 }
@@ -446,7 +454,7 @@
         this.pending = true;
         this.$store.state.contractInstance().sendChallenge(this.selectedTarget, {
           gas: GAS_LIMIT,
-          value: this.$store.state.web3.web3Instance().toWei(PENALTY_IN_ETHER, 'ether'),
+          value: this.penalty,
           from: this.$store.state.web3.coinbase
         }, (err, result) => {
           if (err) {

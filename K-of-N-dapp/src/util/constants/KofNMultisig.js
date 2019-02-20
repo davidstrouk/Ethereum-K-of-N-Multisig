@@ -1,4 +1,4 @@
-const address = "0xcc6cedad041642621aa9675c9aab6ba795ad0b81";
+const address = "0x8a6242E463abeFD9c9fAd1bce6E74aC14Cfb28b8";
 const ABI = [
   {
     "constant": false,
@@ -334,6 +334,20 @@ const ABI = [
     "constant": true,
     "inputs": [],
     "name": "getNumberOfTransactions",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getPenalty",
     "outputs": [
       {
         "name": "",

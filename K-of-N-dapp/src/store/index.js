@@ -3,48 +3,56 @@ import Vuex from 'vuex'
 import state from './state'
 import getWeb3 from '../util/getWeb3'
 import pollWeb3 from '../util/pollWeb3'
-import getContract from '../util/getContract'
+import {getContract, getFactoryContract} from '../util/getContract'
 
 Vue.use(Vuex);
 
 export const store = new Vuex.Store({
- strict: true,
- state,
- mutations: {
-   registerWeb3Instance (state, payload) {
-     let result = payload;
-     let web3Copy = state.web3;
-     web3Copy.coinbase = result.coinbase;
-     web3Copy.networkId = result.networkId;
-     web3Copy.balance = parseInt(result.balance, 10);
-     web3Copy.isInjected = result.injectedWeb3;
-     web3Copy.web3Instance = result.web3;
-     state.web3 = web3Copy;
-     pollWeb3()
-   },
-   pollWeb3Instance (state, payload) {
-     state.web3.coinbase = payload.coinbase;
-     state.web3.balance = parseInt(payload.balance, 10)
-   },
-   registerContractInstance (state, payload) {
-     state.contractInstance = () => payload
-   }
- },
- actions: {
-   registerWeb3 ({commit}) {
+  strict: true,
+  state,
+  mutations: {
+    registerWeb3Instance(state, payload) {
+      let result = payload;
+      let web3Copy = state.web3;
+      web3Copy.coinbase = result.coinbase;
+      web3Copy.networkId = result.networkId;
+      web3Copy.balance = parseInt(result.balance, 10);
+      web3Copy.isInjected = result.injectedWeb3;
+      web3Copy.web3Instance = result.web3;
+      state.web3 = web3Copy;
+      pollWeb3();
+    },
+    pollWeb3Instance(state, payload) {
+      state.web3.coinbase = payload.coinbase;
+      state.web3.balance = parseInt(payload.balance, 10)
+    },
+    registerContractInstance(state, payload) {
+      state.contractInstance = () => payload
+    },
+    registerFactoryContractInstance(state, payload) {
+      state.factoryContractInstance = () => payload
+    }
+  },
+  actions: {
+    registerWeb3({commit}) {
       getWeb3.then(result => {
         commit('registerWeb3Instance', result)
       }).catch(e => {
         console.log('error in action registerWeb3', e)
       })
     },
-    pollWeb3 ({commit}, payload) {
+    pollWeb3({commit}, payload) {
       commit('pollWeb3Instance', payload)
     },
-    getContractInstance ({commit}) {
+    getContractInstance({commit}) {
       getContract.then(result => {
         commit('registerContractInstance', result)
       }).catch(e => console.log(e))
+    },
+    getFactoryContractInstance({commit}) {
+      getFactoryContract.then(result => {
+        commit('registerFactoryContractInstance', result)
+      }).catch(e => console.log(e))
     }
- }
+  }
 });
