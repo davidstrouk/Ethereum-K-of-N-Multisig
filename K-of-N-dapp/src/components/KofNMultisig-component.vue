@@ -1,19 +1,26 @@
 <template>
   <div class="KofNMultisig">
     <div>
-      <h4>
-        Shared Wallet Details:
-      </h4>
-      <p>Contract address: {{ getContractAddress() }}</p>
-      <p>Balance: {{ fromWeitoEther(this.balance) }} ether</p>
-      <p>Members in the group: {{ this.N }}</p>
+      <b-row>
+        <b-col cols="8">
+          <h4>
+            Shared Wallet Details:
+          </h4>
+          <p>Contract address: {{ getContractAddress() }}</p>
+          <p>Balance: {{ fromWeitoEther(this.balance) }} ether</p>
+          <p>Members in the group: {{ this.N }}</p>
+        </b-col>
+        <b-col cols="4">
+          <img v-if="pending" id="loader" src="../assets/loading.svg">
+        </b-col>
+      </b-row>
       <br>
       <div v-if="userInGroup">
         <p>To make a transfer, you need approval of {{ this.K }} members out of {{ this.N }}.</p>
         <br/>
         <div v-show="challengeIsActive" style="color: red;">
+          There is an active challenge right now.
           <div v-if="getCurrentBlocksToRespond > 0">
-            There is an active challenge right now.
             <br>Please wait until it has been answered or time has passed for sending a new one.
             <br>Remaining blocks for response : {{ getCurrentBlocksToRespond }}
           </div>
@@ -107,14 +114,14 @@
       <div class="error" v-else>
         You don't belong to the group
       </div>
-      <img v-if="pending" id="loader" src="https://loading.io/spinners/double-ring/lg.double-ring-spinner.gif">
     </div>
   </div>
 </template>
 
 <script>
   import getTransactionReceiptMined from "../util/getTransactionReceiptMined";
-  import {address} from "../util/constants/KofNMultisig"
+  import {address} from "../util/constants/KofNMultisig";
+  import * as _ from "underscore";
 
   const BLOCKS_TO_BLOCK = 50;
   const BLOCKS_TO_RESPOND = 20;
@@ -132,6 +139,7 @@
         currentBlockNumber: null,
 
         challengeIsActive: false,
+        challengeStartBlock: 0,
 
         sendChallengeEvent: null,
         respondToChallengeEvent: null,
@@ -193,7 +201,6 @@
       setInterval(function () {
         this.$store.state.web3.web3Instance().eth.getBlockNumber((error, result) => {
           this.currentBlockNumber = result;
-          console.log("this.currentBlockNumber = ", this.currentBlockNumber);
         });
       }.bind(this), 1000);
     },
@@ -202,7 +209,7 @@
         return (this.lastChallengeBlock !== 0 && this.currentBlockNumber - this.lastChallengeBlock.toNumber() < BLOCKS_TO_BLOCK) || this.challengeIsActive;
       },
       getCurrentBlocksToRespond() {
-        return this.lastChallengeBlock !== 0 ? this.lastChallengeBlock.toNumber() + this.getBlocksToRespond() - this.currentBlockNumber : 0;
+        return this.challengeStartBlock !== 0 ? this.challengeStartBlock.toNumber() + this.getBlocksToRespond() - this.currentBlockNumber : 0;
       },
       web3() {
         return this.$store.state.web3;
@@ -216,6 +223,7 @@
         this.updateNumberOfTransactions();
         this.updateChallengeIsActive();
         this.updateLastChallengeBlock();
+        this.updateChallengeStartBlock();
         this.updateUserInGroup();
         this.updateUsersList();
       },
@@ -376,6 +384,16 @@
           from: this.$store.state.web3.coinbase
         }, (err, challengeIsActive) => {
           this.challengeIsActive = challengeIsActive;
+          console.log("this.challengeIsActive = ", this.challengeIsActive);
+        });
+      },
+      updateChallengeStartBlock() {
+        this.$store.state.contractInstance().getChallengeStartBlock({
+          gas: GAS_LIMIT,
+          from: this.$store.state.web3.coinbase
+        }, (err, challengeStartBlock) => {
+          this.challengeStartBlock = challengeStartBlock;
+          console.log("this.challengeStartBlock = ", this.challengeStartBlock);
         });
       },
       updateLastChallengeBlock() {
@@ -384,7 +402,7 @@
           from: this.$store.state.web3.coinbase
         }, (err, lastChallengeBlock) => {
           this.lastChallengeBlock = lastChallengeBlock;
-          console.log("this.lastChallengedBlock = ", this.lastChallengeBlock.toNumber());
+          console.log("this.lastChallengeBlock = ", lastChallengeBlock.toNumber());
         });
       },
       updateNumberOfTransactions() {
@@ -416,7 +434,7 @@
             from: this.$store.state.web3.coinbase
           }, (err, inGroup) => {
             if (inGroup) {
-              this.activeUsersList.push({value: this.usersList[i], text: this.usersList[i]});
+              this.activeUsersList.push({value: this.usersList[i], text: `User ${this.getUserNumberFromAddress(this.usersList[i])}`});
             }
           });
         }
@@ -451,6 +469,10 @@
                     duration: 10000,
                     width: "500"
                   });
+                  this.updateChallengeIsActive();
+                  this.updateUserInGroup();
+                  this.updateLastChallengeBlock();
+                  this.updateChallengeStartBlock();
                   this.pending = false;
                 }
               }
@@ -470,8 +492,6 @@
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
-                this.updateChallengeIsActive();
-                this.updateLastChallengeBlock();
                 console.log("Execution was successful");
               }
             });
@@ -505,6 +525,7 @@
                     duration: 10000,
                     width: "500"
                   });
+                  this.updateChallengeIsActive();
                   this.pending = false
                 }
               }
@@ -522,7 +543,6 @@
                 });
                 this.pending = false;
               } else {
-                this.updateChallengeIsActive();
                 console.log("Execution was successful");
               }
             });
@@ -578,6 +598,7 @@
                     duration: 10000,
                     width: "500"
                   });
+                  this.updateChallengeIsActive();
                   this.pending = false
                 }
               }
@@ -596,7 +617,6 @@
                 this.pending = false;
                 console.log("The contract execution was not successful, check your transaction !");
               } else {
-                this.updateChallengeIsActive();
                 console.log("Execution was successful");
               }
             });
@@ -633,8 +653,14 @@
                     duration: 10000,
                     width: "500"
                   });
-                  this.updateNumberOfTransactions();
-                  this.updateTransactionsList();
+                  this.$store.state.contractInstance().getNumberOfTransactions({
+                    gas: GAS_LIMIT,
+                    from: this.$store.state.web3.coinbase
+                  }, (err, number_of_transactions) => {
+                    this.numberOfTransactions = parseInt(number_of_transactions);
+                    this.updateTransactionsList();
+                    this.updateTransactionsTable();
+                  });
                   this.pending = false;
                 }
               }
@@ -803,6 +829,9 @@
       },
       getBlocksToRespond() {
         return BLOCKS_TO_RESPOND;
+      },
+      getUserNumberFromAddress(address) {
+        return _.indexOf(this.usersList, address) + 1;
       }
     }
   }
