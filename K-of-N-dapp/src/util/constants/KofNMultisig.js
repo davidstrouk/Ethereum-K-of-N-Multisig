@@ -1,4 +1,4 @@
-const address = "0x68314fa4c302fd3aac6ad94bd936431a72d2cd58";
+const address = "0xd187809f5a045a227ea9b97bdaf407ffd076db10";
 const ABI = [
   {
     "constant": false,
@@ -530,4 +530,7 @@ const ABI = [
   }
 ];
 
-export {address, ABI}
+export {
+  address,
+  ABI
+};

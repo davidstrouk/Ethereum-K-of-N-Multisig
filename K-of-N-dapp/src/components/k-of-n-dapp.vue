@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="ml-3">
     <h1>K-of-N-Multisig Wallet</h1>
     <div v-if="web3.isInjected">
       <metamask-data></metamask-data>

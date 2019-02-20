@@ -4,63 +4,96 @@
       <h4>
         Shared Wallet Details:
       </h4>
-      <p>Balance: {{ fromWeitoEther(this.balance) }}</p>
-      <p>N: {{ this.N }}</p>
-      <p>K: {{ this.K }}</p>
-      <br/>
-      <div v-if="challengeIsActive">
-        There is an active challenge.
-      </div>
-      <div v-else>
-        There is NO active challenge.
-      </div>
+      <p>Contract address: {{ getContractAddress() }}</p>
+      <p>Balance: {{ fromWeitoEther(this.balance) }} ether</p>
+      <p>Members in the group: {{ this.N }}</p>
+      <br>
       <div v-if="userInGroup">
+        <p>To make a transfer, you need approval of {{ this.K }} members out of {{ this.N }}.</p>
+        <br/>
+        <div v-show="challengeIsActive" style="color: red;">
+          <div v-if="getCurrentBlocksToRespond > 0">
+            There is an active challenge right now.
+            <br>Please wait until it has been answered or time has passed for sending a new one.
+            <br>Remaining blocks for response : {{ getCurrentBlocksToRespond }}
+          </div>
+          <div v-else>
+            Challenged user has not responded to challenge.
+            <br>You can now remove him from group by pressing "Try To Remove Challenged User" button.
+          </div>
+        </div>
+        <div v-show="!challengeIsActive" style="color: blue;">
+          There is no active challenge right now.
+          <br>Sending a challenge is possible.
+        </div>
+        <br>
         <b-row>
-          <b-col>
-            <b-form-select v-model="selectedTarget" :options="usersList" class="mb-3"/>
+          <b-col cols="4">
+            <b-form-select v-model="selectedTarget" :options="activeUsersList"/>
           </b-col>
-          <b-col>
+          <b-col cols="2"></b-col>
+          <b-col cols="6">
             <b-button v-if="userIsBlockedFromSendingChallenge" disabled>Send Challenge</b-button>
             <b-button v-else v-on:click="sendChallenge">Send Challenge</b-button>
           </b-col>
         </b-row>
         <b-row>
           <b-col>
+            <b>
+              <u>Notice:</u>
+              when sending a challenge, you will have to pay a fee of 0.1 ether
+            </b>
+          </b-col>
+        </b-row>
+        <br>
+        <b-row>
+          <b-col cols="4"></b-col>
+          <b-col cols="2"></b-col>
+          <b-col cols="6">
             <b-button v-if="challengeIsActive" v-on:click="respondToChallenge">Respond to challenge</b-button>
             <b-button v-else disabled>Respond to challenge</b-button>
           </b-col>
         </b-row>
+        <br>
         <b-row>
-          <b-col>
+          <b-col cols="4"></b-col>
+          <b-col cols="2"></b-col>
+          <b-col cols="6">
             <b-button v-if="challengeIsActive" v-on:click="tryToRemoveChallengedUser">Try to remove challenged user
             </b-button>
             <b-button v-else disabled>Try to remove challenged user</b-button>
           </b-col>
         </b-row>
+        <br>
+        <hr>
+        <br>
         <b-row>
-          <b-col>
+          <b-col cols="4">
             <b-form-input v-model="requestPaymentReceiver"
                           type="text"
                           placeholder="Receiver's address"></b-form-input>
           </b-col>
-          <b-col>
+          <b-col cols="2">
             <b-form-input v-model="requestPaymentAmount"
                           type="number"
-                          placeholder="Amount to send (in ether)"></b-form-input>
+                          placeholder="Amount (in ether)"></b-form-input>
           </b-col>
-          <b-col>
+          <b-col cols="6">
             <b-button v-on:click="requestPayment">Request Payment</b-button>
           </b-col>
         </b-row>
+        <br>
         <b-row>
-          <b-col>
+          <b-col cols="4">
             <b-form-select :options="transactionsList" v-model="approvePaymentTxId"></b-form-select>
           </b-col>
-          <b-col>
+          <b-col cols="2"></b-col>
+          <b-col cols="6">
             <b-button v-if="transactionsList.length > 0" v-on:click="approvePayment">Approve Payment</b-button>
             <b-button v-else disabled>Approve Payment</b-button>
           </b-col>
         </b-row>
+        <br>
         <b-row>
           <b-col>
             <b-table ref="table" striped hover
@@ -81,8 +114,10 @@
 
 <script>
   import getTransactionReceiptMined from "../util/getTransactionReceiptMined";
+  import {address} from "../util/constants/KofNMultisig"
 
   const BLOCKS_TO_BLOCK = 50;
+  const BLOCKS_TO_RESPOND = 20;
   const PENALTY_IN_ETHER = 0.1;
   const GAS_LIMIT = 3000000;
 
@@ -93,6 +128,8 @@
         balance: null,
         N: null,
         K: null,
+        coinbase: null,
+        currentBlockNumber: null,
 
         challengeIsActive: false,
 
@@ -127,14 +164,16 @@
       }
     },
     watch: {
-      numberOfTransactions: function () {
-        this.updateUsersList();
-      },
+      // numberOfTransactions: function () {
+      //   this.updateUsersList();
+      // },
       usersList: function () {
         this.updateTransactionsTable();
       },
       transactionsTable: function () {
-        this.$refs.table.refresh();
+        // if (this.transactionsTable) {
+        //   this.$refs.table.refresh();
+        // }
       },
       balance: function () {
         this.updateTransactionsList();
@@ -142,13 +181,31 @@
     },
     mounted() {
       this.$store.dispatch('getContractInstance').then(() => {
-        this.updateData();
       });
+
+      let accountInterval = setInterval(function () {
+        if (this.web3.coinbase !== this.coinbase) {
+          this.coinbase = this.web3.coinbase;
+          this.updateData();
+        }
+      }.bind(this), 100);
+
+      setInterval(function () {
+        this.$store.state.web3.web3Instance().eth.getBlockNumber((error, result) => {
+          this.currentBlockNumber = result;
+          console.log("this.currentBlockNumber = ", this.currentBlockNumber);
+        });
+      }.bind(this), 1000);
     },
     computed: {
       userIsBlockedFromSendingChallenge() {
-        // TODO: check if it is working
-        return this.lastChallengeBlock !== 0 && this.$store.state.web3.web3Instance().eth.blockNumber - this.lastChallengeBlock < BLOCKS_TO_BLOCK;
+        return (this.lastChallengeBlock !== 0 && this.currentBlockNumber - this.lastChallengeBlock.toNumber() < BLOCKS_TO_BLOCK) || this.challengeIsActive;
+      },
+      getCurrentBlocksToRespond() {
+        return this.lastChallengeBlock !== 0 ? this.lastChallengeBlock.toNumber() + this.getBlocksToRespond() - this.currentBlockNumber : 0;
+      },
+      web3() {
+        return this.$store.state.web3;
       }
     },
     methods: {
@@ -158,6 +215,9 @@
         this.updateSharedWalletBalance();
         this.updateNumberOfTransactions();
         this.updateChallengeIsActive();
+        this.updateLastChallengeBlock();
+        this.updateUserInGroup();
+        this.updateUsersList();
       },
 
       updateN() {
@@ -324,6 +384,7 @@
           from: this.$store.state.web3.coinbase
         }, (err, lastChallengeBlock) => {
           this.lastChallengeBlock = lastChallengeBlock;
+          console.log("this.lastChallengedBlock = ", this.lastChallengeBlock.toNumber());
         });
       },
       updateNumberOfTransactions() {
@@ -382,7 +443,6 @@
               } else {
                 if (this.sendChallengeEvent === null) {
                   this.sendChallengeEvent = result.args;
-                  this.pending = false;
                   this.$notify({
                     group: 'KofNMultisig',
                     title: 'Challenge Sent',
@@ -391,6 +451,7 @@
                     duration: 10000,
                     width: "500"
                   });
+                  this.pending = false;
                 }
               }
             });
@@ -497,7 +558,7 @@
                     width: "500"
                   });
                   this.pending = false;
-                  this.updateActiveUsersList();
+                  this.updateData();
                 }
               }
             });
@@ -736,6 +797,12 @@
       },
       getPaymentTransferredEventMessage(paymentTransferredEvent) {
         return `Transaction number ${paymentTransferredEvent.txId} has been transferred.`;
+      },
+      getContractAddress() {
+        return address;
+      },
+      getBlocksToRespond() {
+        return BLOCKS_TO_RESPOND;
       }
     }
   }

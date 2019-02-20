@@ -7,7 +7,7 @@
     </div>
     <div class="metamask-info">
       <p>Account: {{ web3.coinbase }}</p>
-      <p>Balance: {{ fromWeitoEther(web3.balance) }}</p>
+      <p>Balance: {{ fromWeitoEther(web3.balance) }} ether</p>
     </div>
   </div>
 </template>
