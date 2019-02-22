@@ -3,7 +3,7 @@
     <h1>K-of-N-Multisig Wallet</h1>
     <div v-if="web3.isInjected">
       <metamask-data></metamask-data>
-      <MultisigWallet></MultisigWallet>
+      <!--<MultisigWallet></MultisigWallet>-->
       <KofNMultisig></KofNMultisig>
     </div>
     <div v-else>

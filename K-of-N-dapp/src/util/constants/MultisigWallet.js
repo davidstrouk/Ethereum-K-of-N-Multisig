@@ -1,4 +1,4 @@
-const factoryAddress = "0x7d90054d560f0c30bea487e85f6de499d062cb6e";
+const factoryAddress = "0x75e9ce53d98c50964e6b49e164aca16ea5be9f9e";
 const factoryABI = [
   {
     "constant": true,

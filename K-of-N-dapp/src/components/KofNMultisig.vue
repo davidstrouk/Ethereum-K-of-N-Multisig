@@ -392,7 +392,6 @@
           from: this.$store.state.web3.coinbase
         }, (err, challengeIsActive) => {
           this.challengeIsActive = challengeIsActive;
-          console.log("this.challengeIsActive = ", this.challengeIsActive);
         });
       },
       updateChallengeStartBlock() {
@@ -401,7 +400,6 @@
           from: this.$store.state.web3.coinbase
         }, (err, challengeStartBlock) => {
           this.challengeStartBlock = challengeStartBlock;
-          console.log("this.challengeStartBlock = ", this.challengeStartBlock);
         });
       },
       updateLastChallengeBlock() {
@@ -410,7 +408,6 @@
           from: this.$store.state.web3.coinbase
         }, (err, lastChallengeBlock) => {
           this.lastChallengeBlock = lastChallengeBlock;
-          console.log("this.lastChallengeBlock = ", lastChallengeBlock.toNumber());
         });
       },
       updateNumberOfTransactions() {

@@ -1,4 +1,4 @@
-const address = "0x8a6242E463abeFD9c9fAd1bce6E74aC14Cfb28b8";
+const address = "0xdeb4b18ca5ac4985a456a5a1f31af273d664d691";
 const ABI = [
   {
     "constant": false,
@@ -71,7 +71,7 @@ const ABI = [
         "type": "address[]"
       },
       {
-        "name": "k",
+        "name": "_K",
         "type": "uint256"
       }
     ],
@@ -180,42 +180,6 @@ const ABI = [
       }
     ],
     "name": "PaymentTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "minimum_balance",
-        "type": "uint256"
-      }
-    ],
-    "name": "InsufficientBalance",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "txId",
-        "type": "uint256"
-      }
-    ],
-    "name": "PaymentAlreadyApproved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "txId",
-        "type": "uint256"
-      }
-    ],
-    "name": "PaymentAlreadyTransferred",
     "type": "event"
   },
   {
