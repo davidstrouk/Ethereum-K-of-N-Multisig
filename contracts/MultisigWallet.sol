@@ -28,8 +28,8 @@ contract MultisigWallet {
 	@param wallets The wallets addresses of the N users
 	@param K The size of required approvals
 	@return The address of the new shared wallet contract
-	  */
-  function addGroup(address[] wallets, uint K)
+	 */
+    function addGroup(address[] wallets, uint K)
 	public
 	returns (address)
 	{
