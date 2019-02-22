@@ -1,5 +1,6 @@
 var KofNMultisig = artifacts.require("KofNMultisig");
 const util = require('util');
+const Web3 = require('web3');
 
 const waitNBlocks = async n => {
   const sendAsync = util.promisify(web3.currentProvider.sendAsync);
@@ -30,7 +31,7 @@ contract('Test K-of-N Functions', async (accounts) => {
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const amount_to_transfer = 10000000000000000; //0.01 ether
-  const BLOCKS_TO_RESPOND = 20;
+  const BLOCKS_TO_RESPOND = 10;
 
   it("testConstructor", async () => {
     var Error;
@@ -141,6 +142,9 @@ contract('Test K-of-N Functions', async (accounts) => {
 
     // ----------------------REQUIRE #3--------------------------
     let instance3 = await KofNMultisig.new(users_in_group, _k);
+    let instance3_address = await instance3.getAddress();
+    await web3.eth.sendTransaction({from: accounts[0], to: instance3_address, value: 2*one_ether});
+
     try {
      await instance3.sendChallenge(users_in_group[1], {value: invalid_penalty, from: users_in_group[0]});
     } catch (error) {
