@@ -374,8 +374,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance4.address, value: web3.toWei(1, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
 
     var init_K = await instance4.getK();
-    // console.log('init balance: %d',init_balance);
-    await instance4.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+    await instance4.sendChallenge(users_in_group[1], {value: one_ether, from: users_in_group[0]});
     var init_balance = await instance4.getBalance();
 
     res = await instance4.getChallengeTarget();
@@ -397,7 +396,7 @@ contract('Test K-of-N Functions', async (accounts) => {
     assert.equal(res.toString(), init_K.toString(), "wrong value of K");
 
     res = await instance4.getBalance();
-    assert.equal(res.toString(), init_balance-valid_penalty, "invalid penalty transfer");
+    assert.equal(res.toString(), one_ether*2-one_ether/3, "invalid penalty transfer");
 
   });
 

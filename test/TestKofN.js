@@ -238,7 +238,7 @@ contract('Test K-of-N', async (accounts) => {
     res = await instance.getK();
     assert.equal(res, _k, "K is invalid");
 
-    await instance.sendChallenge(aaron_address, {from: david_address, value: valid_penalty});
+    await instance.sendChallenge(aaron_address, {from: david_address, value: one_ether*2});
     res = await instance.getChallengeIsActive();
     assert.equal(res, true, "challenge.isActive is wrong");
     res = await instance.getChallengeSender();
@@ -248,7 +248,7 @@ contract('Test K-of-N', async (accounts) => {
     res = await instance.getUserChallenged(aaron_address);
     assert.equal(res, true, "userChallenged is wrong");
     res = await instance.getBalance();
-    assert.equal(res, 10*one_ether+valid_penalty, "Balance is wrong");
+    assert.equal(res, 12*one_ether, "Balance is wrong");
 
     await waitNBlocks(BLOCKS_TO_RESPOND/2);
 
@@ -299,7 +299,7 @@ contract('Test K-of-N', async (accounts) => {
     res = await instance.getBalance();
     assert.equal(res, new_balance, "Balance is wrong");
 
-    await instance.sendChallenge(david_address, {from: ilana_address, value: 2*valid_penalty});
+    await instance.sendChallenge(david_address, {from: ilana_address, value: 2*one_ether});
     await waitNBlocks(BLOCKS_TO_BLOCK);
     // user tries to remove himself (I think it is OK - check with Shoval)
     await instance.tryToRemoveChallengedUser({from: david_address});
@@ -318,12 +318,12 @@ contract('Test K-of-N', async (accounts) => {
     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "requestPayment error");
 
     // Ouri sends a challenge to Ness and she answers
-    await instance.sendChallenge(ness_address, {from: ouri_address, value: valid_penalty});
+    await instance.sendChallenge(ness_address, {from: ouri_address, value: 3*one_ether});
     await instance.respondToChallenge({from: ness_address});
 
     // Now Ouri tries to send another challenge: he is blocked
     try {
-      await instance.sendChallenge(ilana_address, {from: ouri_address, value: valid_penalty});
+      await instance.sendChallenge(ilana_address, {from: ouri_address, value: 3*one_ether});
     } catch (error) {
       Error = error;
     }
@@ -334,7 +334,7 @@ contract('Test K-of-N', async (accounts) => {
 
     // We waited BLOCKS_TO_BLOCK so Ouri can send a challenge now
     // He is sending to Ness and this time she doesn't answer
-    await instance.sendChallenge(ness_address, {from: ouri_address, value: valid_penalty});
+    await instance.sendChallenge(ness_address, {from: ouri_address, value: 3*one_ether});
     await waitNBlocks(BLOCKS_TO_RESPOND);
     await instance.tryToRemoveChallengedUser({from: ouri_address});
 
