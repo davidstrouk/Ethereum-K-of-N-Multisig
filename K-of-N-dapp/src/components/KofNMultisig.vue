@@ -48,7 +48,7 @@
           <b-col>
             <b>
               <u>Notice:</u>
-              when sending a challenge, you will have to pay a fee of {{ fromWeitoEther(penalty) }} ether
+              when sending a challenge, you will have to pay a fee of {{ fromWeitoEther(penalty/2) }} ether
             </b>
           </b-col>
         </b-row>
@@ -188,7 +188,8 @@
       }
     },
     mounted() {
-      this.$store.dispatch('getContractInstance').then(() => {});
+      this.$store.dispatch('getContractInstance').then(() => {
+      });
 
       let accountInterval = setInterval(function () {
         if (this.web3.coinbase !== this.coinbase) {
@@ -273,6 +274,7 @@
           gas: GAS_LIMIT,
           from: this.$store.state.web3.coinbase
         }, (err, number_of_transactions) => {
+          this.transactionsList = [];
           let numberOfTransactions = parseInt(number_of_transactions);
           for (let i = 1; i <= numberOfTransactions; i++) {
             this.$store.state.contractInstance().getTransactionCount(i, {
@@ -351,15 +353,30 @@
                 from: this.$store.state.web3.coinbase
               }, (err, count) => {
                 transactionRow["count"] = parseInt(count);
-                if (transactionRow["count"] === this.K) {
-                  transactionRow["_rowVariant"] = "success";
-                }
                 if (err) {
                   reject(err);
                 }
                 if (count) {
                   resolve(count);
                 }
+              })
+            })
+          );
+
+          promises.push(
+            new Promise((resolve, reject) => {
+              this.$store.state.contractInstance().getTransactionTransferred(i, {
+                gas: GAS_LIMIT,
+                from: this.$store.state.web3.coinbase
+              }, (err, transferred) => {
+                console.log("transferred = ", transferred);
+                if (transferred) {
+                  transactionRow["_rowVariant"] = "success";
+                }
+                if (err) {
+                  reject(err);
+                }
+                resolve(transferred);
               })
             })
           );
@@ -439,7 +456,10 @@
             from: this.$store.state.web3.coinbase
           }, (err, inGroup) => {
             if (inGroup) {
-              this.activeUsersList.push({value: this.usersList[i], text: `User ${this.getUserNumberFromAddress(this.usersList[i])}`});
+              this.activeUsersList.push({
+                value: this.usersList[i],
+                text: `User ${this.getUserNumberFromAddress(this.usersList[i])}`
+              });
             }
           });
         }
@@ -449,9 +469,11 @@
       sendChallenge(event) {
         this.sendChallengeEvent = null;
         this.pending = true;
+        let value = this.penalty/2 + 1000000000000;
+
         this.$store.state.contractInstance().sendChallenge(this.selectedTarget, {
           gas: GAS_LIMIT,
-          value: this.penalty,
+          value: value,
           from: this.$store.state.web3.coinbase
         }, (err, result) => {
           if (err) {
