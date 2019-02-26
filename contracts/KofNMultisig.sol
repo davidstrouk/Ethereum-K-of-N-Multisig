@@ -33,6 +33,7 @@ contract KofNMultisig {
         uint amountToTransfer;
         uint count;
         mapping (address => bool) usersApproves;
+        bool transferred;
     }
 
     struct User {
@@ -85,7 +86,7 @@ contract KofNMultisig {
 	{
 	    require(usersInGroup[msg.sender].inGroup == true, "You dont belong to the group");
 	    require(challenge.isActive == false, "There is already a published challenge");
-	    require(msg.value >= penalty, "You dont have enough money to pay the penalty");
+	    require(msg.value >= penalty/2, "You dont have enough money to pay the penalty");
 	    require(usersInGroup[target].inGroup == true, "Your target doesnt belong to the group");
 	    require(usersInGroup[msg.sender].lastChallengeBlock == 0 || block.number - usersInGroup[msg.sender].lastChallengeBlock >= BLOCKS_TO_BLOCK, "You are blocked from sending a challenge. Please wait");
 
@@ -124,7 +125,7 @@ contract KofNMultisig {
     // Called to trigger the removal of the user from the group in case times up
 	public
 	{
-        require(usersInGroup[msg.sender].inGroup == true, "You dont belong to the group");
+      require(usersInGroup[msg.sender].inGroup == true, "You dont belong to the group");
 	    require(challenge.isActive == true, "There is no challenge");
 	    require(usersInGroup[challenge.target].inGroup == true, "The user was already removed from the group");
 	    if(block.number - challenge.startBlock > BLOCKS_TO_RESPOND) {
@@ -174,7 +175,7 @@ contract KofNMultisig {
         require(amount > 0, "Please ask for a positive amount");
 
         numberOfTransactions++;
-        ledger[numberOfTransactions] = Transaction(receiver, amount, 0);
+        ledger[numberOfTransactions] = Transaction(receiver, amount, 0, false);
         emit PaymentRequested(amount, receiver, numberOfTransactions);
         approvePayment(numberOfTransactions);
 
@@ -202,6 +203,7 @@ contract KofNMultisig {
                 require((challenge.isActive == false && address(this).balance >= ledger[txId].amountToTransfer)
                 || (challenge.isActive == true && address(this).balance >= ledger[txId].amountToTransfer + penalty),
                 "There is not enough money to make the transfer");
+                transaction.transferred = true;
                 _makePayment(transaction.amountToTransfer, transaction.receiver);
                 emit PaymentTransferred(txId);
             }
@@ -449,6 +451,23 @@ contract KofNMultisig {
     {
         return ledger[txId].usersApproves[userAddress];
     }
+
+
+    /**
+    @notice Get transaction transferred
+    @param txId The transaction Id
+    @return {
+        "transferred": "True if the transaction has been transferred, False otherwise"
+    }
+    */
+    function getTransactionTransferred(uint txId)
+    public
+    view
+    returns (bool)
+    {
+        return ledger[txId].transferred;
+    }
+
 
     /**
     @notice Get penalty wallet
