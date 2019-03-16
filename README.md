@@ -1,7 +1,4 @@
 # Ethereum-K-of-N-Multisig
-* Pull the repository and perform the installation steps. There is no need to do these steps more than once on each computer.
-* Do not save any private keys on this repository.
-* Enjoy!
 
 ## Table of Contents
 
@@ -11,9 +8,8 @@
 - [Front End interaction](#front-end-interaction)
 - [Maintainers](#maintainers)
 - [License](#license)
-- [Example- In Development](#example)
-- [Documentation- In Development](#documentation)
-- [Development- In Development](#development)
+- [Example](#example)
+- [Documentation](#documentation)
 
 ## Installation Instructions
 1. Download the latest node.js from: https://nodejs.org/en/download/
