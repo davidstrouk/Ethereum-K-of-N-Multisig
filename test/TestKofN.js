@@ -19,8 +19,10 @@ contract('Test K-of-N', async (accounts) => {
   const users_in_group = [accounts[0], accounts[1], accounts[2], accounts[3], accounts[4]];
   const user_out_of_group = accounts[9];
   const one_ether = 1000000000000000000; // 1 ether
+  const two_ether = 2000000000000000000; // 2 ether
   const ten_ether = 10000000000000000000; // 10 ether
-  const eight_ether = 8000000000000000000; // 8 ether
+  const four_ether = 4000000000000000000; // 4 ether
+  const zero_point_eight = 800000000000000000; //0.8 ether
   const valid_penalty = 100000000000000000; //0.1 ether
   const invalid_penalty = 10000000000000000; //0.01 ether
   const amount_to_transfer = 10000000000000000; //0.01 ether
@@ -55,12 +57,12 @@ contract('Test K-of-N', async (accounts) => {
 
     // user 1 didnt approved, send a challenge
     await waitNBlocks(3);
-    await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[3]});
+    await instance1.sendChallenge(users_in_group[1], {value: one_ether, from: users_in_group[3]});
     res = await instance1.getTransactionCount(1);
     assert.equal(res, 4, "transaction.count is invalid");
     await waitNBlocks(1);
     try {
-      await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[0]});
+      await instance1.sendChallenge(users_in_group[1], {value: one_ether, from: users_in_group[0]});
     } catch (error) {
       Error = error;
     }
@@ -76,16 +78,16 @@ contract('Test K-of-N', async (accounts) => {
     res = await instance1.getChallengeIsActive();
     assert.equal(res, false, "challenge.isActive is invalid");
     res = await instance1.getBalance();
-    assert.equal(res.toString(), balance-one_ether-valid_penalty, "contract.balance is invalid");
+    assert.equal(res.toString(), balance-one_ether-two_ether, "contract.balance is invalid");
     res = await instance1.getTransactionCount(1);
     assert.equal(res, 5, "transaction.count is invalid");
     res = await instance1.getTransactionCount(2);
     assert.equal(res, 3, "transaction.count is invalid");
 
     // user 3 is blocked from sending a challenge
-    await waitNBlocks(20);
+    await waitNBlocks(10);
     try {
-      await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[3]});
+      await instance1.sendChallenge(users_in_group[2], {value: two_ether, from: users_in_group[3]});
     } catch (error) {
       Error = error;
     }
@@ -94,7 +96,7 @@ contract('Test K-of-N', async (accounts) => {
 
     // user 3 dont respond to txId=2 and remove from the group
     await instance1.approvePayment(2, {from: users_in_group[2]});
-    await instance1.sendChallenge(users_in_group[3], {value: valid_penalty, from: users_in_group[4]});
+    await instance1.sendChallenge(users_in_group[3], {value: zero_point_eight, from: users_in_group[4]});
     await waitNBlocks(BLOCKS_TO_RESPOND);
     await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
     try {
@@ -108,7 +110,7 @@ contract('Test K-of-N', async (accounts) => {
     assert.equal(res, users_in_group.length-1, "new K is invalid");
 
     // user 0 send a challenge to himself and respond
-    await instance1.sendChallenge(users_in_group[0], {value: valid_penalty, from: users_in_group[0]});
+    await instance1.sendChallenge(users_in_group[0], {value: 2*zero_point_eight, from: users_in_group[0]});
     await waitNBlocks(5);
     await instance1.tryToRemoveChallengedUser({from: users_in_group[1]});
     res = await instance1.getK();
@@ -118,7 +120,7 @@ contract('Test K-of-N', async (accounts) => {
     assert.equal(res, true, "user.inGroup is invalid");
 
     // user 1 send a challenge to himself and dont respond
-    await instance1.sendChallenge(users_in_group[1], {value: valid_penalty, from: users_in_group[1]});
+    await instance1.sendChallenge(users_in_group[1], {value: 2*zero_point_eight, from: users_in_group[1]});
     await waitNBlocks(BLOCKS_TO_RESPOND);
     await instance1.tryToRemoveChallengedUser({from: users_in_group[4]});
     res = await instance1.getUserInGroup(users_in_group[1]);
@@ -128,7 +130,7 @@ contract('Test K-of-N', async (accounts) => {
 
     // user 3 try to use the contract
     try {
-      await instance1.sendChallenge(users_in_group[1], {from: users_in_group[3]});
+      await instance1.sendChallenge(users_in_group[1], {value: two_ether, from: users_in_group[3]});
     } catch (error) {
       Error = error;
     }
@@ -174,44 +176,32 @@ contract('Test K-of-N', async (accounts) => {
 
     // user 2 approve transaction and then get out of the group
     await waitNBlocks(BLOCKS_TO_BLOCK);
-    await instance1.requestPayment(eight_ether, accounts[8], {from: users_in_group[0]});
+    await instance1.requestPayment(four_ether, accounts[8], {from: users_in_group[0]});
     await instance1.approvePayment(3,{from: users_in_group[2]});
-    await instance1.sendChallenge(users_in_group[2], {value: valid_penalty, from: users_in_group[0]});
+    await instance1.sendChallenge(users_in_group[2], {value: two_ether, from: users_in_group[0]});
     await waitNBlocks(BLOCKS_TO_RESPOND);
     await instance1.tryToRemoveChallengedUser({from: users_in_group[0]});
     res = await instance1.getUserInGroup(users_in_group[2]);
     assert.equal(res, false, "user.inGroup is invalid");
     try {
-    await instance1.approvePayment(4,{from: users_in_group[4]});
+    await instance1.approvePayment(4,{from: users_in_group[2]});
     } catch (error) {
       Error = error;
     }
     assert.notEqual(Error, undefined, 'Error must be thrown');
     assert.isAbove(Error.message.search("You dont belong to the group"), -1, "approvePayment error");
 
-    // check with david what happen in this case: 3 people in the group, 1 approve and then get off the group, whst happen when the third user approve???
-    // check the balance if transaction should happen or not
-
-
     // transaction approve by all users but there is not enough money
+    // transfer money to the account but cant re-approve transaction 4 (balance stay the same)
     var balance = await instance1.getBalance();
-    await instance1.requestPayment(balance, accounts[8], {from: users_in_group[0]});
-    try {
+    await instance1.requestPayment(balance+1, accounts[8], {from: users_in_group[0]});
     await instance1.approvePayment(4,{from: users_in_group[4]});
-    } catch (error) {
-      Error = error;
-    }
-    assert.notEqual(Error, undefined, 'Error must be thrown');
-    assert.isAbove(Error.message.search("There is not enough money to make the transfer"), -1, "approvePayment error");
-
-    // transfer money to the account but cant re-approve transaction 5 (balance stay the same)
-    web3.eth.sendTransaction({from:web3.eth.accounts[0] , to:instance1.address, value: web3.toWei(5, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
+    web3.eth.sendTransaction({from:web3.eth.accounts[0], to:instance1.address, value: web3.toWei(10, 'ether'), gasLimit: 21000, gasPrice: 20000000000})
     var balance2 = await instance1.getBalance();
-    console.log('balance: %d',balance2);
     await instance1.approvePayment(4, {from: users_in_group[4]});
     res = await instance1.getBalance();
-    console.log('after balance: %d',res);
-    assert.equal(res, balance2, "approvePayment error");
+    assert.equal(balance2, 21800000000000000000, "approvePayment error");
+    assert.equal(res, 21800000000000000000, "approvePayment error");
 
 
   });
@@ -277,7 +267,6 @@ contract('Test K-of-N', async (accounts) => {
     assert.equal(res, false, "transaction.usersApprove is wrong");
 
     // The member of the group David approves the transaction to himself
-    // (nothing prevents from this: is it OK? I think yes - check with Shoval)
     await instance.approvePayment(tx_id, {from: david_address});
     res = await instance.getTransactionCount(tx_id);
     assert.equal(res, 2, "transaction.count is wrong");
@@ -301,7 +290,7 @@ contract('Test K-of-N', async (accounts) => {
 
     await instance.sendChallenge(david_address, {from: ilana_address, value: 2*one_ether});
     await waitNBlocks(BLOCKS_TO_BLOCK);
-    // user tries to remove himself (I think it is OK - check with Shoval)
+    // user tries to remove himself
     await instance.tryToRemoveChallengedUser({from: david_address});
     res = await instance.getN();
     assert.equal(res, 4, "N is wrong");

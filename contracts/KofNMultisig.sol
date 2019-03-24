@@ -200,12 +200,13 @@ contract KofNMultisig {
             emit PaymentApproved(txId);
             if(transaction.count == K)
             {
-                require((challenge.isActive == false && address(this).balance >= ledger[txId].amountToTransfer)
-                || (challenge.isActive == true && address(this).balance >= ledger[txId].amountToTransfer + penalty),
-                "There is not enough money to make the transfer");
-                transaction.transferred = true;
-                _makePayment(transaction.amountToTransfer, transaction.receiver);
-                emit PaymentTransferred(txId);
+                if((challenge.isActive == false && address(this).balance >= ledger[txId].amountToTransfer)
+                || (challenge.isActive == true && address(this).balance >= ledger[txId].amountToTransfer + penalty)) {
+                  transaction.transferred = true;
+                  _makePayment(transaction.amountToTransfer, transaction.receiver);
+                  emit PaymentTransferred(txId);
+                }
+
             }
         }
     }
